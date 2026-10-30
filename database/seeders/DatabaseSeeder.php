@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
         $roleDistributeur->givePermissionTo($manageProducts);
 
         $this->call(AdminSeeder::class);
+        $this->call(StockPermissionSeeder::class);
 
         $user = User::firstOrCreate(
             ['email' => 'test@example.com'],

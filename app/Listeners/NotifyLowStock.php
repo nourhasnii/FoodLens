@@ -3,8 +3,8 @@
 namespace App\Listeners;
 
 use App\Events\StockLevelLow;
-use App\Models\User;
 use App\Notifications\LowStockNotification;
+use App\Support\StockAccess;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 
@@ -17,8 +17,12 @@ class NotifyLowStock
             return;
         }
 
-        // À restreindre selon la gestion des rôles du projet (ex: ->where('role', 'admin'))
-        $recipients = User::query()->get();
+        // Seulement les utilisateurs actifs qui gèrent les stocks (permission manage_stocks)
+        $recipients = StockAccess::managers();
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
 
         Notification::send($recipients, new LowStockNotification(
             siteId: $event->site->getKey(),

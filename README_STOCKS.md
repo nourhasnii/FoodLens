@@ -150,6 +150,24 @@ Raccourci utile : le lien « Optimiser » d'une ligne de stock ouvre `optimizati
 
 ---
 
+## 4 bis. Rôles, permissions et tests
+
+**Accès (Spatie)** : toutes les routes du module ont le middleware `can:manage_stocks`.
+
+| Rôle | Accès au module |
+|---|---|
+| admin, producteur, transformateur, distributeur | ✅ |
+| consommateur, compte sans rôle | ❌ 403 (liens masqués dans le menu et le tableau de bord) |
+
+- La permission est créée par la migration `2026_10_30_100000_add_manage_stocks_permission` (base existante : `php artisan migrate`) et par `StockPermissionSeeder` (appelé par `DatabaseSeeder`).
+- Les alertes de rupture (`NotifyLowStock`) partent seulement aux comptes **actifs** qui ont `manage_stocks` (`App\Support\StockAccess::managers()`).
+
+**Tests Pest** (`tests/Feature/Stocks`, 36 tests) : `php artisan test tests/Feature/Stocks`
+
+- `StockAccessTest` : accès par rôle, 403 pour le consommateur, menu masqué.
+- `StockServiceTest` : calcul du stock (entrée, sortie, transfert, ajustement), refus (stock insuffisant, même site, lot rappelé), alerte au franchissement du seuil, destinataires de l'alerte, Form Request.
+- `OptimizationEngineTest` : score + explication stockés en base, contraintes (capacité, origine, associations), site le plus proche, lot rappelé/périmé refusé, validation avec transfert automatique, modification, double décision refusée.
+
 ## 5. Écrans (Blade)
 
 1. **Vue globale des stocks** (`stocks.index`) : une carte par site avec jauge d'occupation segmentée, puis le tableau des lignes (disponible, seuil, DLC, état : OK / Stock bas / Rupture / DLC proche / Bloqué). Compteurs en haut : lignes sous le seuil, lots proches de la DLC.

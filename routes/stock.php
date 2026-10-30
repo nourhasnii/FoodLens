@@ -12,7 +12,8 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockMovementController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', 'active.account'])->group(function () {
+// can:manage_stocks → admin, producteur, transformateur, distributeur (pas le consommateur)
+Route::middleware(['auth', 'verified', 'active.account', 'can:manage_stocks'])->group(function () {
     Route::resource('sites', SiteController::class)->except('show');
 
     Route::resource('stocks', StockController::class);

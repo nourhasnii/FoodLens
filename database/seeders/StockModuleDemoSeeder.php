@@ -18,6 +18,8 @@ class StockModuleDemoSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(StockPermissionSeeder::class);
+
         $producerId = User::query()->value('id');
 
         if (! $producerId) {

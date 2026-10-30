@@ -331,6 +331,7 @@
                             </ul>
                         </div>
 
+                        @can('manage_stocks')
                         <div>
                             <ul class="space-y-1">
                                 <li>
@@ -365,6 +366,7 @@
                                 </li>
                             </ul>
                         </div>
+                        @endcan
 
                         @if(auth()->user()->can('manage_users'))
                             <div>

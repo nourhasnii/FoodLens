@@ -113,14 +113,17 @@
             <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-7">
                 <a href="{{ app('router')->has('admin.products.index') ? route('admin.products.index') : '#' }}" class="rounded-xl border border-[#DCE7DE] bg-[#EEF3EC] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#C7D9C9] dark:border-white/10 dark:bg-[#24452F] dark:text-white">Products</a>
                 <a href="{{ app('router')->has('admin.batches.index') ? route('admin.batches.index') : '#' }}" class="rounded-xl border border-[#DCE7DE] bg-[#FBEFE0] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#E7D0A6] dark:border-white/10 dark:bg-[#5A421F] dark:text-white">Batches</a>
+                @can('manage_stocks')
                 <a href="{{ route('stocks.index') }}" class="rounded-xl border border-[#DCE7DE] bg-[#EAF3F0] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#C5D9D2] dark:border-white/10 dark:bg-[#1E4A42] dark:text-white">Stocks</a>
                 <a href="{{ route('stock-movements.index') }}" class="rounded-xl border border-[#DCE7DE] bg-[#F3F3E9] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#D7DAB3] dark:border-white/10 dark:bg-[#524E1F] dark:text-white">Movements</a>
                 <a href="{{ route('optimization.index') }}" class="rounded-xl border border-[#DCE7DE] bg-[#EEF3EC] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#C7D9C9] dark:border-white/10 dark:bg-[#24452F] dark:text-white">Optimization</a>
                 <a href="{{ route('forecast.index') }}" class="rounded-xl border border-[#DCE7DE] bg-[#F5E7E2] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#E5C5B7] dark:border-white/10 dark:bg-[#5A2B22] dark:text-white">Forecast</a>
+                @endcan
                 <a href="{{ app('router')->has('admin.verification.index') ? route('admin.verification.index') : '#' }}" class="rounded-xl border border-[#DCE7DE] bg-[#F5E7E2] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#E5C5B7] dark:border-white/10 dark:bg-[#5A2B22] dark:text-white">Alerts / risks</a>
             </div>
         </section>
 
+        @can('manage_stocks')
         <section class="w-full rounded-2xl border border-[#DCE7DE] bg-white p-5 shadow-[0_14px_35px_-28px_rgba(31,61,46,0.7)] dark:border-white/10 dark:bg-[#1E3527] dark:shadow-[0_14px_35px_-25px_rgba(227,162,60,0.25)]">
             <div class="flex items-center justify-between gap-4">
                 <h3 class="text-base font-bold text-ink dark:text-white">Stock &amp; Optimization</h3>
@@ -151,6 +154,7 @@
                 <a href="{{ route('forecast.index') }}" class="inline-flex items-center rounded-full border border-[#DCE7DE] bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-[#C7D9C9] dark:border-white/10 dark:bg-[#1E3527] dark:text-white">Forecast</a>
             </div>
         </section>
+        @endcan
 
         <section class="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             @foreach($kpis as $kpi)
