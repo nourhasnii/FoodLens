@@ -7,6 +7,7 @@
 
 use App\Http\Controllers\ForecastController;
 use App\Http\Controllers\OptimizationController;
+use App\Http\Controllers\PhotoInventoryController;
 use App\Http\Controllers\SimulationController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StockController;
@@ -23,6 +24,14 @@ Route::middleware(['auth', 'verified', 'active.account', 'can:manage_stocks'])->
 
     // Jumeau numérique « Et si ? » : simulation sans IA / avec IA (les stocks réels ne sont pas modifiés)
     Route::resource('simulations', SimulationController::class)->only(['index', 'store', 'show', 'destroy']);
+
+    // Inventaire par photo : l'IA de vision compte, l'utilisateur valide, les écarts deviennent des ajustements
+    Route::resource('photo-inventories', PhotoInventoryController::class)->only(['index', 'store', 'show']);
+    Route::prefix('photo-inventories/{photoInventory}')->name('photo-inventories.')->controller(PhotoInventoryController::class)->group(function () {
+        Route::post('analyze', 'analyze')->name('analyze');
+        Route::post('apply', 'apply')->name('apply');
+        Route::get('photo', 'photo')->name('photo');
+    });
 
     Route::resource('stock-movements', StockMovementController::class)->only(['index', 'create', 'store']);
 

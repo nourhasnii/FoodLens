@@ -201,12 +201,7 @@
     </x-slot>
 
     <div class="stock-module space-y-6">
-        @if (session('success'))
-            <div class="notice notice-success" role="status">{{ session('success') }}</div>
-        @endif
-        @if (session('error'))
-            <div class="notice notice-error" role="alert">{{ session('error') }}</div>
-        @endif
+        {{-- Les messages session('success') / session('error') sont déjà affichés par x-dashboard-layout --}}
         @if ($errors->any())
             <div class="notice notice-error" role="alert">
                 <p class="notice-title">Corrigez les points suivants :</p>

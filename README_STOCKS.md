@@ -162,7 +162,7 @@ Raccourci utile : le lien « Optimiser » d'une ligne de stock ouvre `optimizati
 - La permission est créée par la migration `2026_10_30_100000_add_manage_stocks_permission` (base existante : `php artisan migrate`) et par `StockPermissionSeeder` (appelé par `DatabaseSeeder`).
 - Les alertes de rupture (`NotifyLowStock`) partent seulement aux comptes **actifs** qui ont `manage_stocks` (`App\Support\StockAccess::managers()`).
 
-**Tests Pest** (`tests/Feature/Stocks`, 36 tests) : `php artisan test tests/Feature/Stocks`
+**Tests Pest** (`tests/Feature/Stocks`, 56 tests) : `php artisan test tests/Feature/Stocks`
 
 - `StockAccessTest` : accès par rôle, 403 pour le consommateur, menu masqué.
 - `StockServiceTest` : calcul du stock (entrée, sortie, transfert, ajustement), refus (stock insuffisant, même site, lot rappelé), alerte au franchissement du seuil, destinataires de l'alerte, Form Request.
@@ -332,6 +332,40 @@ Sur cet historique, l'IA retrouve seule le rythme de la semaine (samedi +21 %, l
 Les dates des fêtes religieuses suivent le calendrier lunaire : elles sont estimées dans `config/stock.php` (`forecast.events`) et doivent être confirmées chaque année. Les multiplicateurs sont des hypothèses métier modifiables.
 
 ---
+
+## 7 quater. Jumeau numérique « Et si ? » (IA de simulation)
+
+Menu **Digital twin** (`/simulations`). Le jumeau numérique copie l'**état réel** des stocks d'aujourd'hui (lignes, lots, DLC, sites GPS), applique un scénario, puis rejoue 7 à 30 jours **deux fois** avec la même demande et les mêmes incidents :
+
+| | Sans IA (pratique habituelle) | Avec IA |
+|---|---|---|
+| Vente | lot le plus proche de sa DLC d'abord (FEFO) | idem |
+| Réassort | quand le magasin passe sous son seuil, jusqu'à 2 × seuil, depuis l'entrepôt le mieux fourni, premier lot venu | quand le stock ne tiendra pas jusqu'au lendemain de la prochaine livraison (prévision + délai camion), lot qui périme le plus tôt |
+| Lot à risque | rien : jeté à la DLC | transfert anticipé vers le magasin le plus proche qui vendra avant la DLC, puis promotion calculée (élasticité-prix), puis don la veille de la DLC |
+
+- **Scénarios** : pic de demande (Ramadan +35 %), panne de camion (retard), site fermé, rupture de la chaîne du froid (lots qui perdent des jours de DLC), ou personnalisé.
+- **Demande** : prévision du module (`DemandForecaster`, calendrier tunisien), jour par jour.
+- **Résultats** : ventes, ventes perdues, taux de service, unités et kg jetés, dons et repas, km, CO₂ du transport et du gaspillage, graphiques cumulés, carte animée jour par jour, journal des décisions.
+- **Contrôle** : pour chaque stratégie, stock de départ = vendu + jeté + donné + restant. Les stocks réels ne sont **jamais** modifiés.
+- Code : `app/Services/Simulation/DigitalTwinSimulator.php`, `SimulationController`, `SimulationRequest`, table `stock_simulations` (historique), `StockSimulationFactory`.
+
+## 7 quinquies. Inventaire par photo (IA de vision)
+
+Menu **Photo inventory** (`/photo-inventories`).
+
+1. Photo d'un rayon ou d'une palette (sur téléphone, l'appareil photo s'ouvre directement).
+2. Le modèle de vision **local** de l'équipe (Ollama `qwen2.5vl`, `config/services.php`) reçoit la photo et la liste des produits du site. Il renvoie un JSON : produit, nombre, confiance.
+3. Les noms lus sont rapprochés des produits du site (similarité de texte sans accents, mots d'emballage ignorés). Une confiance sous 60 % est marquée « à vérifier ». Les objets inconnus sont listés à part.
+4. **L'utilisateur valide ou corrige** : rien ne change avant la validation.
+5. Chaque écart devient un **mouvement d'ajustement** (motif « Inventaire photo #N »). Un manque est retiré d'abord du stock sans lot, puis des lots les plus proches de leur DLC.
+
+Sans Ollama (non lancé, modèle absent, réponse illisible), l'écran passe en **saisie manuelle** avec un bouton « Relancer l'analyse IA » : la page ne plante jamais. Les photos sont privées (disque `local`) et servies seulement aux comptes `manage_stocks`.
+
+Préparer Ollama le jour de la démo : `ollama pull qwen2.5vl` puis `ollama serve`.
+
+Code : `app/Services/Inventory/PhotoInventoryService.php`, `PhotoInventoryController`, `PhotoInventoryRequest`, `PhotoInventoryApplyRequest`, table `photo_inventories`, `PhotoInventoryFactory`.
+
+**Tests** : `DigitalTwinSimulatorTest` (11) et `PhotoInventoryTest` (9, Ollama simulé avec `Http::fake`).
 
 ## 8. Scénario de démonstration (soutenance, ~5 min)
 
