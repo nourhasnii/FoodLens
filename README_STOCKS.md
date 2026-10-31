@@ -162,7 +162,7 @@ Raccourci utile : le lien « Optimiser » d'une ligne de stock ouvre `optimizati
 - La permission est créée par la migration `2026_10_30_100000_add_manage_stocks_permission` (base existante : `php artisan migrate`) et par `StockPermissionSeeder` (appelé par `DatabaseSeeder`).
 - Les alertes de rupture (`NotifyLowStock`) partent seulement aux comptes **actifs** qui ont `manage_stocks` (`App\Support\StockAccess::managers()`).
 
-**Tests Pest** (`tests/Feature/Stocks`, 56 tests) : `php artisan test tests/Feature/Stocks`
+**Tests Pest** (`tests/Feature/Stocks`, 57 tests) : `php artisan test tests/Feature/Stocks`
 
 - `StockAccessTest` : accès par rôle, 403 pour le consommateur, menu masqué.
 - `StockServiceTest` : calcul du stock (entrée, sortie, transfert, ajustement), refus (stock insuffisant, même site, lot rappelé), alerte au franchissement du seuil, destinataires de l'alerte, Form Request.
@@ -361,11 +361,11 @@ Menu **Photo inventory** (`/photo-inventories`).
 
 Sans Ollama (non lancé, modèle absent, réponse illisible), l'écran passe en **saisie manuelle** avec un bouton « Relancer l'analyse IA » : la page ne plante jamais. Les photos sont privées (disque `local`) et servies seulement aux comptes `manage_stocks`.
 
-Préparer Ollama le jour de la démo : `ollama pull qwen2.5vl` puis `ollama serve`.
+Préparer Ollama le jour de la démo : installer Ollama (https://ollama.com/download), puis `ollama pull qwen2.5vl` (ou `qwen2.5vl:3b` sur un PC à 8 Go de RAM, avec `STOCK_VISION_MODEL=qwen2.5vl:3b` dans `.env`). La photo est réduite à 1280 px avant l'analyse, et la limite de temps PHP est allongée au délai d'Ollama.
 
 Code : `app/Services/Inventory/PhotoInventoryService.php`, `PhotoInventoryController`, `PhotoInventoryRequest`, `PhotoInventoryApplyRequest`, table `photo_inventories`, `PhotoInventoryFactory`.
 
-**Tests** : `DigitalTwinSimulatorTest` (11) et `PhotoInventoryTest` (9, Ollama simulé avec `Http::fake`).
+**Tests** : `DigitalTwinSimulatorTest` (11) et `PhotoInventoryTest` (10, Ollama simulé avec `Http::fake`).
 
 ## 8. Scénario de démonstration (soutenance, ~5 min)
 

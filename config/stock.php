@@ -125,6 +125,8 @@ return [
     'photo_inventory' => [
         'model' => env('STOCK_VISION_MODEL'),           // null : modèle de config/services.php (qwen2.5vl)
         'max_photo_kb' => 8192,
+        // La photo est réduite à ce côté maximal (px) avant l'analyse : beaucoup plus rapide sur processeur
+        'max_side' => 1280,
         // En dessous de cette confiance, le comptage de l'IA est signalé « à vérifier »
         'low_confidence' => 0.6,
         // Similarité minimale (%) entre le nom lu par l'IA et un produit du site pour les associer

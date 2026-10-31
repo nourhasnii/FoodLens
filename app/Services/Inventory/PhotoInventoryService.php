@@ -50,12 +50,18 @@ class PhotoInventoryService
                 throw new \RuntimeException('Photo introuvable sur le disque.');
             }
 
+            // Un modèle de vision sur processeur (sans carte graphique) peut dépasser
+            // la limite de PHP (30 à 120 s selon php.ini) : on attend autant que le délai d'Ollama.
+            if (function_exists('set_time_limit')) {
+                @set_time_limit((int) config('services.ollama.timeout', 300) + 60);
+            }
+
             $model = config('stock.photo_inventory.model') ?: null;
             $answer = $this->ollama->generateJson(
                 prompt: $this->prompt($products),
                 systemPrompt: 'Tu es un assistant d’inventaire pour un entrepôt alimentaire. Tu comptes précisément des unités visibles et tu réponds uniquement en JSON.',
                 model: $model,
-                images: [base64_encode($raw)],
+                images: [base64_encode($this->shrink($raw))],
             );
 
             $decoded = $this->decode($answer['response']);
@@ -320,6 +326,42 @@ class PhotoInventoryService
         }
 
         return $count;
+    }
+
+    /**
+     * Réduit la photo (côté le plus long : max_side px, JPEG) : l'analyse est bien plus rapide
+     * et le comptage reste lisible. Sans l'extension GD, la photo est envoyée telle quelle.
+     */
+    private function shrink(string $raw): string
+    {
+        $max = (int) config('stock.photo_inventory.max_side', 1280);
+        if ($max <= 0 || ! function_exists('imagecreatefromstring')) {
+            return $raw;
+        }
+
+        $image = @imagecreatefromstring($raw);
+        if ($image === false) {
+            return $raw;
+        }
+
+        [$w, $h] = [imagesx($image), imagesy($image)];
+        if (max($w, $h) <= $max) {
+            imagedestroy($image);
+
+            return $raw;
+        }
+
+        $ratio = $max / max($w, $h);
+        $resized = imagescale($image, (int) round($w * $ratio), (int) round($h * $ratio));
+        ob_start();
+        imagejpeg($resized ?: $image, null, 85);
+        $out = (string) ob_get_clean();
+        imagedestroy($image);
+        if ($resized) {
+            imagedestroy($resized);
+        }
+
+        return $out !== '' ? $out : $raw;
     }
 
     private function friendlyError(Throwable $e): string

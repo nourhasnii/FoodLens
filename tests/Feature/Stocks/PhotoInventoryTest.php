@@ -77,6 +77,21 @@ it('compte les produits de la photo avec l’IA et les rapproche du stock', func
         ->assertOk()->assertSee('Deux pots renversés')->assertSee('à vérifier')->assertSee('Boîte de thon');
 });
 
+it('réduit une grande photo avant de l’envoyer à l’IA', function () {
+    fakeVision(['items' => []]);
+
+    $this->actingAs($this->user)->post(route('photo-inventories.store'), [
+        'site_id' => $this->site->id,
+        'photo' => UploadedFile::fake()->image('grand-rayon.jpg', 4000, 3000),
+    ]);
+
+    Http::assertSent(function ($request) {
+        [$w, $h] = getimagesizefromstring(base64_decode($request['images'][0]));
+
+        return max($w, $h) === 1280 && $w === 1280 && $h === 960;
+    });
+});
+
 it('passe en saisie manuelle si Ollama n’est pas lancé', function () {
     Http::fake(fn () => throw new \Illuminate\Http\Client\ConnectionException('Connection refused'));
 
