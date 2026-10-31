@@ -7,6 +7,7 @@
 
 use App\Http\Controllers\ForecastController;
 use App\Http\Controllers\OptimizationController;
+use App\Http\Controllers\SimulationController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockMovementController;
@@ -19,6 +20,9 @@ Route::middleware(['auth', 'verified', 'active.account', 'can:manage_stocks'])->
     Route::resource('stocks', StockController::class);
 
     Route::get('previsions', [ForecastController::class, 'index'])->name('forecast.index');
+
+    // Jumeau numérique « Et si ? » : simulation sans IA / avec IA (les stocks réels ne sont pas modifiés)
+    Route::resource('simulations', SimulationController::class)->only(['index', 'store', 'show', 'destroy']);
 
     Route::resource('stock-movements', StockMovementController::class)->only(['index', 'create', 'store']);
 
