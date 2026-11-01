@@ -11,6 +11,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
@@ -41,9 +42,9 @@ class RegisteredUserController extends Controller
         $user = User::create([
             ...collect($validated)->except(['role'])->all(),
             'password' => Hash::make($validated['password']),
+            'email_verified_at' => now(),
             'account_status' => $isConsumer ? 'active' : 'pending',
             'must_change_password' => ! $isConsumer,
-            'email_verified_at' => now(),
         ]);
 
         $user->assignRole(Role::firstOrCreate(['name' => $role, 'guard_name' => 'web']));
@@ -60,6 +61,16 @@ class RegisteredUserController extends Controller
         );
 
         $emailFailed = false;
+
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $exception) {
+            $emailFailed = true;
+            Log::warning('NutriTrace verification email could not be delivered.', [
+                'user_id' => $user->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         if ($isConsumer) {
             try {
@@ -94,12 +105,12 @@ class RegisteredUserController extends Controller
 
         if ($isConsumer) {
             return redirect()->route('dashboard')->with($emailFailed ? 'error' : 'success', $emailFailed
-                ? 'Your account is ready, but the welcome email could not be delivered.'
-                : 'Your account is ready.');
+                ? "Votre compte est prêt, mais certains e-mails n'ont pas pu être envoyés."
+                : 'Votre compte est prêt. Bienvenue sur NutriTrace !');
         }
 
         return redirect()->route('dashboard')->with($emailFailed ? 'error' : 'success', $emailFailed
-            ? 'Your registration was saved, but one or more notification emails could not be delivered.'
-            : 'Your registration has been submitted for review.');
+            ? "Votre inscription a bien été enregistrée, mais certains e-mails n'ont pas pu être envoyés."
+            : 'Votre inscription a bien été enregistrée et sera examinée par notre équipe.');
     }
 }

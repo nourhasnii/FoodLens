@@ -16,6 +16,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Product::class);
+
         $query = $request->query('q');
         $search = is_string($query) ? trim($query) : '';
         $categoryId = filter_var($request->query('category_id'), FILTER_VALIDATE_INT, [
@@ -34,6 +36,7 @@ class ProductController extends Controller
 
         $products = Product::query()
             ->with(['producer', 'categoryModel', 'certifications'])
+            ->when(! $request->user()->can('manage_all_products'), fn ($query) => $query->where('producer_id', $request->user()->getKey()))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
@@ -54,9 +57,13 @@ class ProductController extends Controller
         return view('admin.products.index', compact('products', 'categories'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $producers = User::orderBy('name')->get(['id', 'name']);
+        $this->authorize('create', Product::class);
+
+        $producers = $request->user()->can('manage_all_products')
+            ? User::orderBy('name')->get(['id', 'name'])
+            : User::whereKey($request->user()->getKey())->get(['id', 'name']);
         $categories = Category::where('is_active', true)->orderBy('name')->get();
 
         return view('admin.products.create', compact('producers', 'categories'));
@@ -64,7 +71,15 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request)
     {
+        $this->authorize('create', Product::class);
+
         $data = $request->validated();
+
+        // Un producteur ne crée que pour son propre compte.
+        if (! $request->user()->can('manage_all_products')) {
+            $data['producer_id'] = $request->user()->getKey();
+        }
+
         $data['category'] = Category::whereKey($data['category_id'])->value('name');
 
         if ($request->hasFile('image')) {
@@ -85,14 +100,20 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
+        $this->authorize('view', $product);
+
         $product->load('batches', 'producer', 'categoryModel');
 
         return view('admin.products.show', compact('product'));
     }
 
-    public function edit(Product $product)
+    public function edit(Request $request, Product $product)
     {
-        $producers = User::orderBy('name')->get(['id', 'name']);
+        $this->authorize('update', $product);
+
+        $producers = $request->user()->can('manage_all_products')
+            ? User::orderBy('name')->get(['id', 'name'])
+            : User::whereKey($request->user()->getKey())->get(['id', 'name']);
         $categories = Category::query()
             ->where(function ($query) use ($product) {
                 $query->where('is_active', true);
@@ -109,7 +130,15 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, Product $product)
     {
+        $this->authorize('update', $product);
+
         $data = $request->validated();
+
+        // Un producteur ne peut pas réattribuer un produit à un autre compte.
+        if (! $request->user()->can('manage_all_products')) {
+            $data['producer_id'] = $request->user()->getKey();
+        }
+
         $data['category'] = Category::whereKey($data['category_id'])->value('name');
 
         $oldImage = $product->image;
@@ -139,6 +168,8 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        $this->authorize('delete', $product);
+
         $product->delete();
 
         return redirect()->route('admin.products.index')

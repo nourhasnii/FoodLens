@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 it('allows an authenticated user to manage certifications with documents', function () {
     Storage::fake('public');
-    $user = User::factory()->create();
+    $user = professionalUser();
     $product = Product::create([
         'name' => 'Tomate Bio',
         'category' => 'Vegetables',
@@ -58,7 +58,7 @@ it('allows an authenticated user to manage certifications with documents', funct
 });
 
 it('validates certification dates and document types', function () {
-    $user = User::factory()->create();
+    $user = professionalUser();
     $product = Product::create([
         'name' => 'Olives',
         'category' => 'Pantry',

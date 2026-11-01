@@ -11,6 +11,10 @@ class Alert extends Model
     use HasFactory;
 
     public const TYPES = ['temperature', 'humidity', 'duration', 'other'];
+
+    /** Sources détectées automatiquement par le NutriAlert Hub. */
+    public const RISK_TYPES = ['certification', 'ocr', 'recall', 'quality', 'coverage'];
+
     public const SEVERITIES = ['info', 'warning', 'critical'];
     public const STATUSES = ['open', 'acknowledged', 'resolved', 'ignored'];
 
@@ -23,6 +27,9 @@ class Alert extends Model
         'message',
         'status',
         'risk_score',
+        'dedup_key',
+        'alertable_type',
+        'alertable_id',
         'resolved_at',
         'resolved_by',
         'created_by',
@@ -39,6 +46,14 @@ class Alert extends Model
     public function batch()
     {
         return $this->belongsTo(Batch::class);
+    }
+
+    /**
+     * Enregistrement source du risque (Certification, OcrCheck, QualityCheck, Batch, Product).
+     */
+    public function alertable()
+    {
+        return $this->morphTo();
     }
 
     public function transportCondition()

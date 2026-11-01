@@ -13,7 +13,7 @@ class EnsureActiveAccount
         $user = $request->user();
 
         if ($user && ! $user->hasRole('admin') && ! $user->isActive()) {
-            return response()->view('account.pending', ['user' => $user], 403);
+            return redirect()->route('account.pending');
         }
 
         return $next($request);

@@ -10,7 +10,6 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-<<<<<<< HEAD
     {
         if (Schema::hasColumn('batches', 'qr_code_path')) {
             return;
@@ -20,18 +19,11 @@ return new class extends Migration
             $table->string('qr_code_path')->nullable()->after('status');
         });
     }
-=======
-{ if (Schema::hasColumn('batches', 'qr_code_path')) { return; }
-    Schema::table('batches', function (Blueprint $table) {
-        $table->string('qr_code_path')->nullable()->after('status');
-    });
-}
->>>>>>> origin/feature/transport-alerts
 
-public function down(): void
-{
-    Schema::table('batches', function (Blueprint $table) {
-        $table->dropColumn('qr_code_path');
-    });
-}
+    public function down(): void
+    {
+        Schema::table('batches', function (Blueprint $table) {
+            $table->dropColumn('qr_code_path');
+        });
+    }
 };

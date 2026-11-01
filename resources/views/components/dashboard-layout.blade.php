@@ -227,13 +227,19 @@
 
                 <div class="mb-8 flex w-full flex-col items-center gap-2 pt-1">
                     <div class="relative">
-                        <div class="h-20 w-20 rounded-full bg-gradient-to-br from-[#2a5040] to-[#16281E] ring-[3px] ring-[#E3A23C] flex items-center justify-center overflow-hidden shadow-[0_10px_25px_-12px_rgba(227,162,60,0.6)]">
-                            <span class="font-fraunces text-2xl font-bold text-[#E3A23C]">{{ strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
-                        </div>
+                        <x-user-avatar
+                            :user="auth()->user()"
+                            size="xl"
+                            class="bg-gradient-to-br from-[#2a5040] to-[#16281E] text-[#E3A23C] ring-[3px] ring-[#E3A23C] shadow-[0_10px_25px_-12px_rgba(227,162,60,0.6)]"
+                        />
                     </div>
                     <div class="w-full text-center">
                         <p class="text-sm font-semibold text-white truncate">{{ auth()->user()->name }}</p>
                         <p class="mt-0.5 text-[11px] text-white/50 truncate">{{ auth()->user()->email }}</p>
+                        <span class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/70 ring-1 ring-inset ring-white/10">
+                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-[#E3A23C]"></span>
+                            {{ auth()->user()->role_label }}
+                        </span>
                     </div>
                 </div>
 
@@ -244,6 +250,12 @@
                                     <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'bg-[#E3A23C] text-[#16281E] font-semibold' : 'text-white/70 hover:bg-white/5' }} group flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors" @click="sidebarOpen = false">
                                     <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
                                     <span>Dashboard</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('notifications.index') }}" class="{{ request()->routeIs('notifications.*') ? 'bg-[#E3A23C] text-[#16281E] font-semibold' : 'text-white/70 hover:bg-white/5' }} group flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors" @click="sidebarOpen = false">
+                                    <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+                                    <span>Notifications</span>
                                 </a>
                             </li>
                         </ul>
@@ -328,9 +340,16 @@
                                         <span>Alerts</span>
                                     </a>
                                 </li>
+                                <li>
+                                    <a href="{{ route('admin.nutrimind.index') }}" class="{{ request()->routeIs('admin.nutrimind.*') ? 'bg-[#E3A23C] text-[#16281E] font-semibold' : 'text-white/70 hover:bg-white/5' }} group flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors" @click="sidebarOpen = false">
+                                        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="12" cy="18" r="2.4"/><path d="M7.7 7.7 10.6 15.9M16.3 7.7 13.4 15.9M8.4 6h7.2"/></svg>
+                                        <span>NutriMind</span>
+                                    </a>
+                                </li>
                             </ul>
                         </div>
 
+                        @if(auth()->user()->can('manage_stocks'))
                         <div>
                             <ul class="space-y-1">
                                 <li>
@@ -365,6 +384,7 @@
                                 </li>
                             </ul>
                         </div>
+                        @endif
 
                         @if(auth()->user()->can('manage_users'))
                             <div>
@@ -436,6 +456,7 @@
                             <a href="{{ route('front.products.index') }}" target="_blank" rel="noopener" class="hidden rounded-xl px-3 py-2 text-sm font-semibold text-ink/55 transition hover:bg-white sm:inline-flex dark:text-white/60 dark:hover:bg-white/5" title="Catalogue public">
                                 Catalogue
                             </a>
+                            <x-notification-bell />
                             <div class="rounded-full border border-ink/10 p-1 shadow-sm dark:border-white/10">
                                 <button type="button" role="switch" @click="theme = theme === 'light' ? 'dark' : 'light'; applyTheme()" class="relative h-8 w-16 rounded-full transition-colors" data-theme-switch :aria-checked="theme === 'dark'" :aria-label="theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'" title="Changer de thème">
                                     <svg x-cloak x-show="theme === 'dark'" class="absolute left-1.5 h-3 w-3 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>

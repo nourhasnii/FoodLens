@@ -26,6 +26,21 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $user = Auth::guard('web')->user();
+
+        // When two-factor authentication is active, hold the login in the session
+        // and ask for an OTP challenge instead of completing authentication.
+        if ($user && $user->hasEnabledTwoFactorAuthentication()) {
+            $request->session()->put([
+                'login.id' => $user->getKey(),
+                'login.remember' => $request->boolean('remember'),
+            ]);
+
+            Auth::guard('web')->logout();
+
+            return redirect()->route('two-factor.challenge');
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));

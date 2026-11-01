@@ -48,3 +48,97 @@ function something()
 {
     // ..
 }
+
+/**
+ * Crée une permission Spatie (idempotent) pour les tests.
+ */
+function testPermission(string $name): \Spatie\Permission\Models\Permission
+{
+    return \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+}
+
+/**
+ * Crée un rôle Spatie (idempotent) et lui attribue les permissions données.
+ *
+ * @param  array<int, string>  $permissions
+ */
+function testRole(string $name, array $permissions = []): \Spatie\Permission\Models\Role
+{
+    $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+    $role->givePermissionTo(array_map('testPermission', $permissions));
+
+    return $role;
+}
+
+/**
+ * Crée un utilisateur professionnel (rôle `producteur` + permission
+ * `manage_products`) pour les tests d'accès au back-office.
+ */
+function professionalUser(array $attributes = []): \App\Models\User
+{
+    $role = testRole('producteur', ['manage_products']);
+
+    $user = \App\Models\User::factory()->create($attributes);
+    $user->assignRole($role);
+
+    return $user;
+}
+
+/**
+ * Crée un transformateur (même périmètre qu'un producteur : ses propres données).
+ */
+function transformateurUser(array $attributes = []): \App\Models\User
+{
+    $role = testRole('transformateur', ['manage_products']);
+
+    $user = \App\Models\User::factory()->create($attributes);
+    $user->assignRole($role);
+
+    return $user;
+}
+
+/**
+ * Crée un distributeur (périmètre élargi : tous les produits, stocks, rappels).
+ */
+function distributorUser(array $attributes = []): \App\Models\User
+{
+    $role = testRole('distributeur', ['manage_products', 'manage_all_products', 'manage_stocks', 'launch_recall']);
+
+    $user = \App\Models\User::factory()->create($attributes);
+    $user->assignRole($role);
+
+    return $user;
+}
+
+/**
+ * Crée un consommateur (aucun accès au back-office professionnel).
+ */
+function consumerUser(array $attributes = []): \App\Models\User
+{
+    $role = testRole('consommateur');
+
+    $user = \App\Models\User::factory()->create($attributes);
+    $user->assignRole($role);
+
+    return $user;
+}
+
+/**
+ * Crée un administrateur (périmètre global + gestion des comptes).
+ */
+function adminUser(array $attributes = []): \App\Models\User
+{
+    $role = testRole('admin', [
+        'manage_products',
+        'manage_all_products',
+        'manage_stocks',
+        'launch_recall',
+        'manage_users',
+        'review_verifications',
+    ]);
+
+    $user = \App\Models\User::factory()->create($attributes);
+    $user->assignRole($role);
+
+    return $user;
+}

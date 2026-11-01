@@ -12,7 +12,7 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockMovementController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', 'active.account'])->group(function () {
+Route::middleware(['auth', 'active.account', 'professional', 'can:manage_stocks'])->group(function () {
     Route::resource('sites', SiteController::class)->except('show');
 
     Route::resource('stocks', StockController::class);

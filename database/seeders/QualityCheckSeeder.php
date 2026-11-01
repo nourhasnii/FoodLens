@@ -36,6 +36,12 @@ class QualityCheckSeeder extends Seeder
             ]);
         }
 
+        // Le module Qualité est protégé par la permission `manage_products` :
+        // l'inspecteur doit posséder un rôle professionnel pour y accéder.
+        if (! $qualityInspector->hasRole('producteur')) {
+            $qualityInspector->assignRole('producteur');
+        }
+
         $seedChecks = [
             [
                 'product_name' => 'Tomates Cerises Heirloom Bio',

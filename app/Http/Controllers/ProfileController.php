@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -35,6 +36,53 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Update the user's profile photo.
+     */
+    public function updatePhoto(Request $request): RedirectResponse
+    {
+        $request->validateWithBag('updatePhoto', [
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $user = $request->user();
+
+        $path = $request->file('photo')->store('profile-photos', 'public');
+
+        if (! $path) {
+            return Redirect::back()->withErrors(
+                ['photo' => "Impossible d'enregistrer la photo de profil."],
+                'updatePhoto'
+            );
+        }
+
+        $oldPath = $user->profile_photo_path;
+
+        $user->forceFill(['profile_photo_path' => $path])->save();
+
+        if ($oldPath && $oldPath !== $path) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        return Redirect::route('profile.edit')->with('status', 'photo-updated');
+    }
+
+    /**
+     * Remove the user's profile photo.
+     */
+    public function destroyPhoto(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $oldPath = $user->profile_photo_path;
+
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
+            $user->forceFill(['profile_photo_path' => null])->save();
+        }
+
+        return Redirect::route('profile.edit')->with('status', 'photo-removed');
     }
 
     /**

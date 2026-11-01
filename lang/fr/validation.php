@@ -128,6 +128,7 @@ return [
         'quantity' => 'quantité',
         'email' => 'adresse e-mail',
         'password' => 'mot de passe',
+        'photo' => 'photo de profil',
     ],
 
     // Valeurs techniques affichées en clair dans les messages (ex. required_if:type,out)

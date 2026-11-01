@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 use App\Services\BrevoMailService;
 
 Artisan::command('inspire', function () {
@@ -28,3 +29,6 @@ Artisan::command('nutritrace:test-email {recipient?}', function (BrevoMailServic
         return 1;
     }
 })->purpose('Send a NutriTrace test email through Brevo');
+
+// NutriAlert Hub : détection automatique des risques toutes les heures.
+Schedule::command('nutritrace:scan-risks')->hourly()->withoutOverlapping();

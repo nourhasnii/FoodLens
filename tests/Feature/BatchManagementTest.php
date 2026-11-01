@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 it('allows an authenticated user to manage batches', function () {
     Storage::fake('public');
 
-    $user = User::factory()->create();
+    $user = professionalUser();
     $product = Product::create([
         'name' => 'Tomates bio',
         'category' => 'Légumes',
@@ -44,7 +44,11 @@ it('allows an authenticated user to manage batches', function () {
     $this->actingAs($user)->post(route('admin.batches.regenerate-qr', $batch))->assertRedirect(route('admin.batches.show', $batch));
     Storage::disk('public')->assertExists($batch->qr_code_path);
 
-    $this->actingAs($user)
+    // Le passage d'un lot au statut « recalled » (rappel) est réservé aux
+    // profils disposant de la permission `launch_recall` (distributeur/admin).
+    $distributor = distributorUser();
+
+    $this->actingAs($distributor)
         ->put(route('admin.batches.update', $batch), [
             'product_id' => $product->id,
             'lot_number' => 'LOT-TEST-001-UPDATED',
@@ -68,7 +72,7 @@ it('allows an authenticated user to manage batches', function () {
 });
 
 it('validates expiration after production and positive quantity', function () {
-    $user = User::factory()->create();
+    $user = professionalUser();
     $product = Product::create([
         'name' => 'Pommes',
         'category' => 'Fruits',
@@ -96,7 +100,7 @@ it('validates expiration after production and positive quantity', function () {
 it('returns French validation errors for invalid batch create and update submissions', function () {
     Storage::fake('public');
 
-    $user = User::factory()->create();
+    $user = professionalUser();
     $product = Product::create([
         'name' => 'Carottes bio',
         'category' => 'Légumes',

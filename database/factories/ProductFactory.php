@@ -68,7 +68,7 @@ class ProductFactory extends Factory
             'producer_id' => User::inRandomOrder()->value('id') ?? User::factory(),
             'unit' => $this->faker->randomElement(self::$units),
             'image' => null,
-            'barcode' => $this->faker->optional(0.6)->unique()->ean13(),
+            'barcode' => $this->faker->boolean(60) ? $this->faker->unique()->ean13() : null,
             'is_organic' => $this->faker->boolean(35),
             'carbon_footprint' => $this->faker->optional(0.7)->randomFloat(2, 0.1, 15.0),
             'verification_status' => $this->faker->randomElement(['pending', 'verified', 'verified', 'verified', 'rejected']),

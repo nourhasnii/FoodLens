@@ -27,19 +27,36 @@ class DashboardController extends Controller
         }
 
         if (! $user->hasRole('admin') && ! $user->isActive()) {
-            return view('account.pending', compact('user'));
+            return redirect()->route('account.pending');
         }
 
-        $productsTotal = Product::count();
-        $activeBatches = Batch::where('status', 'active')->count();
-        $certificationTotal = Certification::count();
-        $inTransitBatches = Batch::where('status', 'in_transit')->count();
-        $alertCount = Product::whereIn('verification_status', ['rejected', 'flagged'])->count()
-            + Batch::where(function ($query) {
+        // Périmètre des données : un producteur (sans `manage_all_products`)
+        // ne voit que ses propres produits, lots et certifications. Le
+        // distributeur et l'administrateur conservent une vue globale.
+        $seesEverything = $user->can('manage_all_products');
+
+        $productQuery = Product::query();
+        $batchQuery = Batch::query();
+        $certificationQuery = Certification::query();
+
+        if (! $seesEverything) {
+            $ownsProduct = fn ($query) => $query->where('producer_id', $user->getKey());
+
+            $productQuery->where('producer_id', $user->getKey());
+            $batchQuery->whereHas('product', $ownsProduct);
+            $certificationQuery->whereHas('product', $ownsProduct);
+        }
+
+        $productsTotal = (clone $productQuery)->count();
+        $activeBatches = (clone $batchQuery)->where('status', 'active')->count();
+        $certificationTotal = (clone $certificationQuery)->count();
+        $inTransitBatches = (clone $batchQuery)->where('status', 'in_transit')->count();
+        $alertCount = (clone $productQuery)->whereIn('verification_status', ['rejected', 'flagged'])->count()
+            + (clone $batchQuery)->where(function ($query) {
                 $query->whereIn('status', ['expired', 'recalled'])
                     ->orWhereBetween('expiration_date', [today(), today()->addDays(30)]);
             })->count()
-            + Certification::withEffectiveStatus(Certification::STATUS_EXPIRED)->count();
+            + (clone $certificationQuery)->withEffectiveStatus(Certification::STATUS_EXPIRED)->count();
 
         $greetingName = explode(' ', trim($user->name))[0] ?? $user->name;
 
@@ -51,7 +68,7 @@ class DashboardController extends Controller
             ['label' => 'En transit',     'value' => $inTransitBatches, 'bg' => 'bg-[#E9F1F4]', 'text' => 'text-[#4E7C8C]', 'icon' => 'transit'],
         ];
 
-        $recentBatches = Batch::with('product')
+        $recentBatches = (clone $batchQuery)->with('product')
             ->latest()
             ->limit(6)
             ->get()
@@ -71,18 +88,29 @@ class DashboardController extends Controller
                 ];
             });
 
-        $lowStockCount = app(StockService::class)->lowStock()->count();
-        $stockOverview = [
-            'sites' => Site::active()->count(),
-            'items' => Stock::count(),
-            'total_quantity' => (float) Stock::sum('quantity'),
-            'low_stock' => $lowStockCount,
-            'pending_optimizations' => OptimizationRecommendation::where('status', RecommendationStatus::Pending->value)->count(),
-            'movements_today' => StockMovement::whereDate('moved_at', today())->count(),
-        ];
+        // Le module Stocks n'est visible que pour les profils disposant de
+        // `manage_stocks` (distributeur/admin) : on évite ainsi d'exposer des
+        // volumes globaux à un producteur.
+        $stockOverview = $user->can('manage_stocks')
+            ? [
+                'sites' => Site::active()->count(),
+                'items' => Stock::count(),
+                'total_quantity' => (float) Stock::sum('quantity'),
+                'low_stock' => app(StockService::class)->lowStock()->count(),
+                'pending_optimizations' => OptimizationRecommendation::where('status', RecommendationStatus::Pending->value)->count(),
+                'movements_today' => StockMovement::whereDate('moved_at', today())->count(),
+            ]
+            : [
+                'sites' => 0,
+                'items' => 0,
+                'total_quantity' => 0.0,
+                'low_stock' => 0,
+                'pending_optimizations' => 0,
+                'movements_today' => 0,
+            ];
 
-        $lastDecisions = $this->buildLastDecisions($user);
-        $toReview = $this->buildToReview($user);
+        $lastDecisions = $this->buildLastDecisions($batchQuery);
+        $toReview = $this->buildToReview($certificationQuery);
 
         return view('dashboard', compact(
             'user',
@@ -109,9 +137,9 @@ class DashboardController extends Controller
         };
     }
 
-    private function buildLastDecisions($user): array
+    private function buildLastDecisions($batchQuery): array
     {
-        $sampleDecisions = Batch::with('product')
+        $sampleDecisions = (clone $batchQuery)->with('product')
             ->latest()
             ->limit(5)
             ->get()
@@ -148,9 +176,9 @@ class DashboardController extends Controller
         return array_merge($sampleDecisions, array_slice($fallback, 0, 4 - count($sampleDecisions)));
     }
 
-    private function buildToReview($user): array
+    private function buildToReview($certificationQuery): array
     {
-        $review = Certification::with('product')
+        $review = (clone $certificationQuery)->with('product')
             ->whereIn('status', [Certification::STATUS_PENDING])
             ->orWhere(function ($q) {
                 $q->where('status', '!=', Certification::STATUS_PENDING)

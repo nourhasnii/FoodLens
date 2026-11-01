@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 it('stores product uploads and retains or replaces the image on update', function () {
     Storage::fake('public');
 
-    $user = User::factory()->create();
+    $user = professionalUser();
     $category = Category::factory()->create();
     $productData = [
         'name' => 'Huile locale',

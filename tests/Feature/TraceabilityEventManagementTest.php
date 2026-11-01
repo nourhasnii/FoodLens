@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
 it('manages traceability events and renders a chronological timeline', function () {
-    $actor = User::factory()->create();
+    $actor = professionalUser();
     $product = Product::create([
         'name' => 'Tomate Bio',
         'category' => 'Vegetables',
@@ -76,7 +76,7 @@ it('manages traceability events and renders a chronological timeline', function 
 });
 
 it('validates event coordinates, type and quantities', function () {
-    $user = User::factory()->create();
+    $user = professionalUser();
     $product = Product::create([
         'name' => 'Olives',
         'category' => 'Pantry',
@@ -113,7 +113,7 @@ it('validates event coordinates, type and quantities', function () {
 it('returns French validation errors for invalid event create and update submissions', function () {
     Storage::fake('public');
 
-    $user = User::factory()->create();
+    $user = professionalUser();
     $product = Product::create([
         'name' => 'Oranges',
         'category' => 'Fruits',

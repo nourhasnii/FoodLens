@@ -150,3 +150,54 @@ it('notifies the administrator when a user resubmits requested information', fun
 
     Http::assertSent(fn ($request) => $request['subject'] === 'NutriTrace application resubmitted' && $request['to'][0]['email'] === 'admin@example.com');
 });
+
+it('keeps a pending professional on the waiting screen even after verifying their email', function () {
+    /** @var \Tests\TestCase $this */
+    verificationRoles();
+    $producer = User::factory()->unverified()->create(['account_status' => 'pending']);
+    $producer->assignRole('producteur');
+    $producer->markEmailAsVerified();
+
+    expect($producer->hasVerifiedEmail())->toBeTrue();
+
+    // Le dashboard redirige désormais vers l'écran d'attente dédié.
+    $this->actingAs($producer)
+        ->get(route('dashboard'))
+        ->assertRedirect(route('account.pending'));
+
+    // L'écran d'attente est autonome : ni sidebar, ni menu dashboard.
+    $this->actingAs($producer)
+        ->get(route('account.pending'))
+        ->assertOk()
+        ->assertSee('Merci pour votre inscription')
+        ->assertSee('Se déconnecter')
+        ->assertDontSee('Dashboard');
+
+    expect($producer->fresh()->account_status)->toBe('pending');
+});
+
+it('blocks a pending professional from the back office and redirects to the waiting page', function () {
+    /** @var \Tests\TestCase $this */
+    verificationRoles();
+    $producer = User::factory()->create(['account_status' => 'pending']);
+    $producer->assignRole('producteur');
+
+    $this->actingAs($producer)
+        ->get(route('admin.products.index'))
+        ->assertRedirect(route('account.pending'));
+});
+
+it('lets an approved professional reach the dashboard and skips the waiting page', function () {
+    /** @var \Tests\TestCase $this */
+    verificationRoles();
+    $producer = User::factory()->create(['account_status' => 'active']);
+    $producer->assignRole('producteur');
+
+    $this->actingAs($producer)
+        ->get(route('dashboard'))
+        ->assertOk();
+
+    $this->actingAs($producer)
+        ->get(route('account.pending'))
+        ->assertRedirect(route('dashboard'));
+});

@@ -82,19 +82,17 @@
 
                             {{-- LIENS CENTRÉS — text-sm, gap réduit --}}
                             <div class="hidden lg:flex items-center gap-8 text-sm text-ink/60">
+                                <a href="#catalogue" class="hover:text-ink font-medium transition-colors">Catalogue</a>
+                                <a href="#lots" class="hover:text-ink font-medium transition-colors">Lots</a>
+                                <a href="#tracabilite" class="hover:text-ink font-medium transition-colors">Traçabilité</a>
                                 <a href="#fonctionnement" class="hover:text-ink font-medium transition-colors">Fonctionnement</a>
-                                <a href="#certifications" class="hover:text-ink font-medium transition-colors">Certifications</a>
-                                <a href="#verification" class="hover:text-ink font-medium transition-colors">Moteur de vérification</a>
                             </div>
 
                             {{-- ICÔNES À DROITE — wrappers w-8 h-8 (~32px), icônes ~18-20px --}}
                             <div class="flex items-center gap-1.5 sm:gap-2 pr-0.5">
                                 @auth
-                                    <a href="{{ route('dashboard') }}" class="w-8 h-8 rounded-full bg-ink/5 hover:bg-ink/10 flex items-center justify-center text-ink/70 transition-colors shrink-0" title="Tableau de bord">
-                                        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21"/>
-                                            <circle cx="12" cy="7" r="4"/>
-                                        </svg>
+                                    <a href="{{ route('dashboard') }}" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ring-ink/10 transition-colors hover:ring-ink/25" title="Tableau de bord">
+                                        <x-user-avatar :user="auth()->user()" size="sm" class="bg-ink/5 text-ink/70" />
                                     </a>
                                     <form method="POST" action="{{ route('logout') }}" class="inline">
                                         @csrf
@@ -275,6 +273,101 @@
                         <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-6 bg-black/20 blur-3xl rounded-full z-0"></div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        {{-- ==============================================================
+             A. CATÉGORIES — données réelles (catégories actives uniquement)
+             ============================================================== --}}
+        <section id="categories" class="bg-cream py-20 lg:py-24">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-10">
+                    <div>
+                        <p class="font-fraunces text-amber-warm font-semibold text-sm tracking-widest uppercase mb-3">Catalogue vivant</p>
+                        <h2 class="font-fraunces font-bold text-3xl lg:text-4xl leading-tight text-ink">Explorez par catégorie</h2>
+                    </div>
+                    <a href="{{ route('front.products.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-forest hover:text-amber-warm transition-colors">
+                        Tout le catalogue
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12H19"/><path d="M13 5L20 12L13 19"/></svg>
+                    </a>
+                </div>
+
+                @if ($categories->isEmpty())
+                    <div class="rounded-3xl border border-dashed border-ink/15 bg-white px-6 py-14 text-center">
+                        <h3 class="font-fraunces text-xl font-bold text-ink">Aucune catégorie pour le moment</h3>
+                        <p class="mt-2 text-sm text-ink/55">Les catégories publiées apparaîtront ici automatiquement.</p>
+                    </div>
+                @else
+                    <div class="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory sidebar-scrollbar-hidden">
+                        @foreach ($categories as $category)
+                            <a href="{{ route('front.products.index', ['category' => $category->slug]) }}"
+                               class="group snap-start shrink-0 w-[220px] rounded-3xl bg-white border border-ink/8 p-5 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-200">
+                                <span class="w-12 h-12 rounded-2xl bg-amber-warm/10 text-amber-warm font-fraunces font-bold text-xl flex items-center justify-center">
+                                    {{ mb_strtoupper(mb_substr($category->name, 0, 1)) }}
+                                </span>
+                                <p class="mt-4 font-fraunces font-bold text-lg text-ink group-hover:text-forest transition-colors">{{ $category->name }}</p>
+                                <p class="mt-1 text-xs text-ink/50">{{ $category->products_count }} produit{{ $category->products_count > 1 ? 's' : '' }} vérifié{{ $category->products_count > 1 ? 's' : '' }}</p>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </section>
+
+        {{-- ==============================================================
+             B. PRODUITS — carrousel des derniers produits vérifiés
+             ============================================================== --}}
+        <section id="catalogue" class="bg-white py-20 lg:py-24">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8" x-data>
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-10">
+                    <div>
+                        <p class="font-fraunces text-amber-warm font-semibold text-sm tracking-widest uppercase mb-3">Produits vérifiés</p>
+                        <h2 class="font-fraunces font-bold text-3xl lg:text-4xl leading-tight text-ink">Derniers produits publiés</h2>
+                    </div>
+                    @if ($products->isNotEmpty())
+                        <div class="hidden sm:flex items-center gap-2">
+                            <button type="button" @click="$refs.track.scrollBy({ left: -360, behavior: 'smooth' })" aria-label="Produits précédents"
+                                class="w-11 h-11 rounded-full bg-cream border border-ink/10 flex items-center justify-center text-ink/70 hover:bg-forest hover:text-white transition-colors">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5"/><path d="M11 5L4 12L11 19"/></svg>
+                            </button>
+                            <button type="button" @click="$refs.track.scrollBy({ left: 360, behavior: 'smooth' })" aria-label="Produits suivants"
+                                class="w-11 h-11 rounded-full bg-cream border border-ink/10 flex items-center justify-center text-ink/70 hover:bg-forest hover:text-white transition-colors">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12H19"/><path d="M13 5L20 12L13 19"/></svg>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+
+                @if ($products->isEmpty())
+                    <div class="rounded-3xl border border-dashed border-ink/15 bg-cream px-6 py-14 text-center">
+                        <h3 class="font-fraunces text-xl font-bold text-ink">Aucun produit publié pour le moment</h3>
+                        <p class="mt-2 text-sm text-ink/55">Les produits vérifiés apparaîtront ici automatiquement.</p>
+                    </div>
+                @else
+                    <div x-ref="track" class="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth sidebar-scrollbar-hidden">
+                        @foreach ($products as $product)
+                            <article class="group snap-start shrink-0 w-[280px] sm:w-[320px] rounded-3xl bg-cream border border-ink/8 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+                                <a href="{{ route('front.products.show', $product) }}" class="block">
+                                    <div class="relative h-48 bg-forest/5 overflow-hidden">
+                                        @if ($product->image_url)
+                                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                        @else
+                                            <span class="absolute inset-0 flex items-center justify-center font-fraunces text-6xl font-semibold text-forest/15">{{ mb_strtoupper(mb_substr($product->name, 0, 1)) }}</span>
+                                        @endif
+                                        @if ($product->carbon_footprint !== null)
+                                            <span class="absolute top-3 right-3 rounded-full bg-forest/90 backdrop-blur text-white text-[11px] font-semibold px-2.5 py-1">CO₂ {{ number_format((float) $product->carbon_footprint, 2, ',', ' ') }} kg</span>
+                                        @endif
+                                    </div>
+                                    <div class="p-5">
+                                        <span class="inline-block rounded-full bg-forest/10 text-forest text-[11px] font-semibold px-2.5 py-1">{{ $product->categoryModel?->name ?? $product->category }}</span>
+                                        <h3 class="mt-3 font-fraunces font-bold text-lg text-ink leading-snug line-clamp-2 group-hover:text-forest transition-colors">{{ $product->name }}</h3>
+                                        <p class="mt-2 text-sm text-ink/60 line-clamp-2 leading-6">{{ $product->description ?: 'Tracez ce produit de l\'origine à la distribution.' }}</p>
+                                    </div>
+                                </a>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </section>
 
@@ -525,6 +618,165 @@
                         <p class="text-sm leading-relaxed text-ink/65">
                             L'allégation est plausible au regard des données disponibles, mais le document justificatif (certificat, facture de transport) est en attente de téléversement ou de validation par un opérateur.
                         </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{-- ==============================================================
+             C. LOTS — lots actifs récents (données réelles)
+             ============================================================== --}}
+        <section id="lots" class="bg-white py-20 lg:py-24">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-10">
+                    <div>
+                        <p class="font-fraunces text-amber-warm font-semibold text-sm tracking-widest uppercase mb-3">Chaîne d'approvisionnement</p>
+                        <h2 class="font-fraunces font-bold text-3xl lg:text-4xl leading-tight text-ink">Lots récemment mis en circulation</h2>
+                    </div>
+                    <a href="#tracabilite" class="inline-flex items-center gap-2 text-sm font-semibold text-forest hover:text-amber-warm transition-colors">
+                        Suivre un lot
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12H19"/><path d="M13 5L20 12L13 19"/></svg>
+                    </a>
+                </div>
+
+                @php
+                    $batchStatusStyles = [
+                        'active' => 'bg-emerald-500/10 text-emerald-700',
+                        'expired' => 'bg-amber-500/10 text-amber-700',
+                        'recalled' => 'bg-red-500/10 text-red-600',
+                    ];
+                    $batchStatusLabels = ['active' => 'Actif', 'expired' => 'Expiré', 'recalled' => 'Rappelé'];
+                @endphp
+
+                @if ($batches->isEmpty())
+                    <div class="rounded-3xl border border-dashed border-ink/15 bg-cream px-6 py-14 text-center">
+                        <h3 class="font-fraunces text-xl font-bold text-ink">Aucun lot actif pour le moment</h3>
+                        <p class="mt-2 text-sm text-ink/55">Les lots actifs apparaîtront ici automatiquement.</p>
+                    </div>
+                @else
+                    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($batches as $batch)
+                            <div class="flex flex-col rounded-3xl bg-cream border border-ink/8 p-6 shadow-sm hover:shadow-lg transition-all duration-200">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-2xl overflow-hidden bg-forest/5 shrink-0 flex items-center justify-center">
+                                        @if ($batch->product?->image_url)
+                                            <img src="{{ $batch->product->image_url }}" alt="{{ $batch->product->name }}" loading="lazy" class="w-full h-full object-cover">
+                                        @else
+                                            <span class="font-fraunces font-bold text-forest/30">{{ mb_strtoupper(mb_substr($batch->product?->name ?? 'L', 0, 1)) }}</span>
+                                        @endif
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="font-fraunces font-bold text-ink truncate">{{ $batch->product?->name ?? 'Produit' }}</p>
+                                        <p class="text-xs font-semibold text-ink/45 truncate">{{ $batch->lot_number }}</p>
+                                    </div>
+                                    <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $batchStatusStyles[$batch->status] ?? 'bg-ink/10 text-ink/70' }}">
+                                        {{ $batchStatusLabels[$batch->status] ?? ucfirst($batch->status) }}
+                                    </span>
+                                </div>
+                                <dl class="mt-5 grid grid-cols-2 gap-3 border-t border-ink/8 pt-5 text-sm">
+                                    <div>
+                                        <dt class="text-[11px] uppercase tracking-wider text-ink/45">Production</dt>
+                                        <dd class="mt-0.5 font-semibold text-ink">{{ $batch->production_date?->format('d/m/Y') ?? '—' }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-[11px] uppercase tracking-wider text-ink/45">Expiration</dt>
+                                        <dd class="mt-0.5 font-semibold text-ink">{{ $batch->expiration_date?->format('d/m/Y') ?? '—' }}</dd>
+                                    </div>
+                                </dl>
+                                <a href="{{ route('front.traceability.show', $batch) }}" class="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-forest px-4 py-2.5 text-sm font-semibold text-white hover:bg-forest-dark transition-colors">
+                                    Suivre ce lot
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12H19"/><path d="M13 5L20 12L13 19"/></svg>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </section>
+
+        {{-- ==============================================================
+             D. TRAÇABILITÉ PUBLIQUE — recherche par n° de lot + exemple
+             ============================================================== --}}
+        <section id="tracabilite" class="bg-forest py-20 lg:py-28 text-white">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8">
+                <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs tracking-wide text-white/70 mb-6">
+                            Traçabilité publique — accès libre
+                        </div>
+                        <h2 class="font-fraunces font-bold text-4xl lg:text-5xl leading-tight mb-6">
+                            Suivez un produit en un clic
+                        </h2>
+                        <p class="text-lg leading-relaxed text-white/75 mb-8 max-w-lg">
+                            Saisissez le numéro de lot figurant sur l'étiquette pour visualiser le parcours réel du produit, de la production à la distribution.
+                        </p>
+
+                        <form method="GET" action="{{ route('front.traceability.index') }}" class="flex flex-col sm:flex-row gap-3 max-w-lg">
+                            <input
+                                type="text"
+                                name="lot"
+                                required
+                                placeholder="N° de lot — ex. LOT-{{ date('Y') }}-OLIV-001"
+                                class="w-full flex-1 rounded-2xl border border-white/15 bg-white/10 px-4 py-3.5 text-sm font-medium text-white placeholder-white/45 focus:border-amber-warm focus:outline-none focus:ring-2 focus:ring-amber-warm/40"
+                            >
+                            <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-warm px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-warm/25 transition-colors hover:bg-amber-warm/90">
+                                Suivre
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12H19"/><path d="M13 5L20 12L13 19"/></svg>
+                            </button>
+                        </form>
+
+                        {{-- Schéma simplifié du parcours --}}
+                        <div class="mt-8 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-white/70">
+                            @foreach (['Production', 'Transport', 'Stockage', 'Distribution'] as $stage)
+                                <span class="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-3 py-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-warm"></span>
+                                    {{ $stage }}
+                                </span>
+                                @if (! $loop->last)
+                                    <svg class="w-3.5 h-3.5 text-white/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12H19"/><path d="M13 5L20 12L13 19"/></svg>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Exemple de timeline (dernier lot avec événements) --}}
+                    <div>
+                        @if ($featuredTimeline)
+                            <div class="rounded-3xl bg-cream p-6 lg:p-8 shadow-2xl shadow-black/30">
+                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <p class="text-[11px] font-bold uppercase tracking-widest text-amber-warm">Exemple — dernier lot suivi</p>
+                                        <p class="mt-1 font-fraunces font-bold text-lg text-ink">{{ $featuredTimeline->product?->name ?? 'Produit' }}</p>
+                                        <p class="text-xs font-semibold text-ink/50">{{ $featuredTimeline->lot_number }}</p>
+                                    </div>
+                                    <a href="{{ route('front.traceability.show', $featuredTimeline) }}" class="rounded-2xl bg-forest px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-forest-dark">
+                                        Ouvrir
+                                    </a>
+                                </div>
+                                <div class="mt-6">
+                                    @include('front.partials.timeline', ['batch' => $featuredTimeline, 'compact' => true])
+                                </div>
+                            </div>
+                        @else
+                            <div class="rounded-3xl bg-cream p-6 lg:p-8 shadow-2xl shadow-black/30">
+                                <p class="text-[11px] font-bold uppercase tracking-widest text-amber-warm">Comment ça marche</p>
+                                <ol class="mt-5 space-y-4">
+                                    @foreach ([
+                                        ['1', 'Chaque lot reçoit un numéro unique', 'Le producteur déclare le lot et chaque étape ajoute un événement daté.'],
+                                        ['2', 'Les événements sont horodatés et géolocalisés', 'Production, transformation, transport, stockage et distribution.'],
+                                        ['3', 'Le public consulte le parcours en libre accès', 'Aucun compte requis : le numéro de lot suffit.'],
+                                    ] as $step)
+                                        <li class="flex gap-4">
+                                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-warm text-sm font-bold text-white">{{ $step[0] }}</span>
+                                            <div>
+                                                <p class="font-semibold text-ink">{{ $step[1] }}</p>
+                                                <p class="mt-0.5 text-sm text-ink/55">{{ $step[2] }}</p>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ol>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

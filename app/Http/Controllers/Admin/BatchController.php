@@ -17,7 +17,10 @@ class BatchController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Batch::class);
+
         $batches = Batch::with('product')
+            ->when(! $request->user()->can('manage_all_products'), fn ($query) => $query->whereHas('product', fn ($product) => $product->where('producer_id', $request->user()->getKey())))
             ->when($request->filled('search'), fn ($query) => $query->where('lot_number', 'like', '%' . $request->string('search') . '%'))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->when($request->filled('product_id'), fn ($query) => $query->where('product_id', $request->integer('product_id')))
@@ -25,7 +28,7 @@ class BatchController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $products = Product::orderBy('name')->get(['id', 'name']);
+        $products = $this->availableProducts($request)->get(['id', 'name']);
 
         return view('admin.batches.index', compact('batches', 'products'));
     }
@@ -33,9 +36,11 @@ class BatchController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $products = Product::orderBy('name')->get(['id', 'name', 'category', 'unit']);
+        $this->authorize('create', Batch::class);
+
+        $products = $this->availableProducts($request)->get(['id', 'name', 'category', 'unit']);
 
         return view('admin.batches.create', compact('products'));
     }
@@ -45,7 +50,15 @@ class BatchController extends Controller
      */
     public function store(Request $request)
     {
-        Batch::create($this->validatedData($request));
+        $this->authorize('create', Batch::class);
+
+        $data = $this->validatedData($request);
+
+        // Un producteur ne peut créer un lot que pour ses propres produits.
+        $this->authorize('view', Product::findOrFail($data['product_id']));
+        $this->guardRecall($request, $data);
+
+        Batch::create($data);
 
         return redirect()->route('admin.batches.index')->with('success', 'Lot créé avec succès.');
     }
@@ -55,6 +68,8 @@ class BatchController extends Controller
      */
     public function show(Batch $batch)
     {
+        $this->authorize('view', $batch);
+
         $batch->load('product');
         $qrCodeExists = $batch->qr_code_path && Storage::disk('public')->exists($batch->qr_code_path);
 
@@ -63,6 +78,8 @@ class BatchController extends Controller
 
     public function downloadQr(Batch $batch)
     {
+        $this->authorize('view', $batch);
+
         $disk = Storage::disk('public');
 
         if (! $batch->qr_code_path || ! $disk->exists($batch->qr_code_path)) {
@@ -76,6 +93,8 @@ class BatchController extends Controller
 
     public function regenerateQr(Batch $batch, BatchQrCodeService $qrCodeService)
     {
+        $this->authorize('update', $batch);
+
         $qrCodeService->generate($batch);
 
         return redirect()->route('admin.batches.show', $batch)->with('success', 'QR code regenerated.');
@@ -84,9 +103,11 @@ class BatchController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Batch $batch)
+    public function edit(Request $request, Batch $batch)
     {
-        $products = Product::orderBy('name')->get(['id', 'name', 'category', 'unit']);
+        $this->authorize('update', $batch);
+
+        $products = $this->availableProducts($request)->get(['id', 'name', 'category', 'unit']);
 
         return view('admin.batches.edit', compact('batch', 'products'));
     }
@@ -96,7 +117,14 @@ class BatchController extends Controller
      */
     public function update(Request $request, Batch $batch)
     {
-        $batch->update($this->validatedData($request, $batch));
+        $this->authorize('update', $batch);
+
+        $data = $this->validatedData($request, $batch);
+
+        $this->authorize('view', Product::findOrFail($data['product_id']));
+        $this->guardRecall($request, $data);
+
+        $batch->update($data);
 
         return redirect()->route('admin.batches.index')->with('success', 'Lot mis à jour avec succès.');
     }
@@ -106,9 +134,32 @@ class BatchController extends Controller
      */
     public function destroy(Batch $batch)
     {
+        $this->authorize('delete', $batch);
+
         $batch->delete();
 
         return redirect()->route('admin.batches.index')->with('success', 'Lot supprimé avec succès.');
+    }
+
+    /**
+     * Produits visibles par l'utilisateur (tous, ou seulement les siens).
+     */
+    private function availableProducts(Request $request)
+    {
+        return Product::query()
+            ->when(! $request->user()->can('manage_all_products'), fn ($query) => $query->where('producer_id', $request->user()->getKey()))
+            ->orderBy('name');
+    }
+
+    /**
+     * Le passage d'un lot au statut « recalled » (rappel) est réservé aux
+     * profils disposant de la permission `launch_recall`.
+     */
+    private function guardRecall(Request $request, array $data): void
+    {
+        if (($data['status'] ?? null) === 'recalled') {
+            abort_unless($request->user()->can('launch_recall'), 403);
+        }
     }
 
     private function validatedData(Request $request, ?Batch $batch = null): array

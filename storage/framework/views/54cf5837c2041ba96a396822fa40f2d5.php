@@ -24,12 +24,47 @@
                 <input id="dashboard-search" type="search" class="w-full rounded-full border border-ink/10 bg-white py-2 pl-9 pr-14 text-sm text-ink placeholder:text-ink/40 focus:border-[#E3A23C] focus:outline-none focus:ring-2 focus:ring-[#E3A23C]/20 dark:border-white/10 dark:bg-[#1E3527] dark:text-white dark:placeholder:text-white/40" placeholder="Rechercher..." />
                 <kbd class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-ink/10 bg-cream px-1.5 py-0.5 text-[10px] font-semibold text-ink/45">⌘K</kbd>
             </label>
-            <button type="button" class="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 bg-white text-ink/55 transition hover:bg-cream dark:border-white/10 dark:bg-[#1E3527] dark:text-white/70 dark:hover:bg-white/10" aria-label="Notifications">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
-                <?php if($alertCount > 0): ?><span class="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-[#E3A23C] ring-2 ring-white"></span><?php endif; ?>
-            </button>
+            <?php if (isset($component)) { $__componentOriginal6541145ad4a57bfb6e6f221ba77eb386 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal6541145ad4a57bfb6e6f221ba77eb386 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.notification-bell','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('notification-bell'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal6541145ad4a57bfb6e6f221ba77eb386)): ?>
+<?php $attributes = $__attributesOriginal6541145ad4a57bfb6e6f221ba77eb386; ?>
+<?php unset($__attributesOriginal6541145ad4a57bfb6e6f221ba77eb386); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal6541145ad4a57bfb6e6f221ba77eb386)): ?>
+<?php $component = $__componentOriginal6541145ad4a57bfb6e6f221ba77eb386; ?>
+<?php unset($__componentOriginal6541145ad4a57bfb6e6f221ba77eb386); ?>
+<?php endif; ?>
             <div class="flex items-center gap-2">
-                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-forest text-sm font-semibold text-white ring-2 ring-white"><?php echo e(strtoupper(mb_substr($user->name, 0, 1))); ?></span>
+                <?php if (isset($component)) { $__componentOriginalaa6ddd3b8ee0acee5a2d1d7ac5c7e40e = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalaa6ddd3b8ee0acee5a2d1d7ac5c7e40e = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.user-avatar','data' => ['user' => $user,'size' => 'md','class' => 'bg-forest text-white ring-2 ring-white dark:ring-[#101815]']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('user-avatar'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['user' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($user),'size' => 'md','class' => 'bg-forest text-white ring-2 ring-white dark:ring-[#101815]']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalaa6ddd3b8ee0acee5a2d1d7ac5c7e40e)): ?>
+<?php $attributes = $__attributesOriginalaa6ddd3b8ee0acee5a2d1d7ac5c7e40e; ?>
+<?php unset($__attributesOriginalaa6ddd3b8ee0acee5a2d1d7ac5c7e40e); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalaa6ddd3b8ee0acee5a2d1d7ac5c7e40e)): ?>
+<?php $component = $__componentOriginalaa6ddd3b8ee0acee5a2d1d7ac5c7e40e; ?>
+<?php unset($__componentOriginalaa6ddd3b8ee0acee5a2d1d7ac5c7e40e); ?>
+<?php endif; ?>
                 <span class="hidden text-sm font-semibold text-ink xl:inline"><?php echo e($user->name); ?></span>
             </div>
             <a href="<?php echo e(route('front.products.index')); ?>" target="_blank" rel="noopener" class="rounded-xl px-3 py-2 text-sm font-semibold text-ink/55 transition hover:bg-cream dark:text-white/60 dark:hover:bg-white/5" title="Catalogue public">Catalogue</a>
@@ -125,14 +160,17 @@
             <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-7">
                 <a href="<?php echo e(app('router')->has('admin.products.index') ? route('admin.products.index') : '#'); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#EEF3EC] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#C7D9C9] dark:border-white/10 dark:bg-[#24452F] dark:text-white">Products</a>
                 <a href="<?php echo e(app('router')->has('admin.batches.index') ? route('admin.batches.index') : '#'); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#FBEFE0] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#E7D0A6] dark:border-white/10 dark:bg-[#5A421F] dark:text-white">Batches</a>
-                <a href="<?php echo e(route('stocks.index')); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#EAF3F0] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#C5D9D2] dark:border-white/10 dark:bg-[#1E4A42] dark:text-white">Stocks</a>
-                <a href="<?php echo e(route('stock-movements.index')); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#F3F3E9] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#D7DAB3] dark:border-white/10 dark:bg-[#524E1F] dark:text-white">Movements</a>
-                <a href="<?php echo e(route('optimization.index')); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#EEF3EC] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#C7D9C9] dark:border-white/10 dark:bg-[#24452F] dark:text-white">Optimization</a>
-                <a href="<?php echo e(route('forecast.index')); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#F5E7E2] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#E5C5B7] dark:border-white/10 dark:bg-[#5A2B22] dark:text-white">Forecast</a>
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('manage_stocks')): ?>
+                    <a href="<?php echo e(route('stocks.index')); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#EAF3F0] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#C5D9D2] dark:border-white/10 dark:bg-[#1E4A42] dark:text-white">Stocks</a>
+                    <a href="<?php echo e(route('stock-movements.index')); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#F3F3E9] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#D7DAB3] dark:border-white/10 dark:bg-[#524E1F] dark:text-white">Movements</a>
+                    <a href="<?php echo e(route('optimization.index')); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#EEF3EC] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#C7D9C9] dark:border-white/10 dark:bg-[#24452F] dark:text-white">Optimization</a>
+                    <a href="<?php echo e(route('forecast.index')); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#F5E7E2] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#E5C5B7] dark:border-white/10 dark:bg-[#5A2B22] dark:text-white">Forecast</a>
+                <?php endif; ?>
                 <a href="<?php echo e(app('router')->has('admin.verification.index') ? route('admin.verification.index') : '#'); ?>" class="rounded-xl border border-[#DCE7DE] bg-[#F5E7E2] px-4 py-3 text-sm font-semibold text-ink transition hover:border-[#E5C5B7] dark:border-white/10 dark:bg-[#5A2B22] dark:text-white">Alerts / risks</a>
             </div>
         </section>
 
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('manage_stocks')): ?>
         <section class="w-full rounded-2xl border border-[#DCE7DE] bg-white p-5 shadow-[0_14px_35px_-28px_rgba(31,61,46,0.7)] dark:border-white/10 dark:bg-[#1E3527] dark:shadow-[0_14px_35px_-25px_rgba(227,162,60,0.25)]">
             <div class="flex items-center justify-between gap-4">
                 <h3 class="text-base font-bold text-ink dark:text-white">Stock &amp; Optimization</h3>
@@ -163,6 +201,7 @@
                 <a href="<?php echo e(route('forecast.index')); ?>" class="inline-flex items-center rounded-full border border-[#DCE7DE] bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-[#C7D9C9] dark:border-white/10 dark:bg-[#1E3527] dark:text-white">Forecast</a>
             </div>
         </section>
+        <?php endif; ?>
 
         <section class="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <?php $__currentLoopData = $kpis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $kpi): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>

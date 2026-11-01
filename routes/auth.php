@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,16 +23,28 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    // Two-factor challenge shown after a valid password when 2FA is enabled.
+    Route::get('two-factor-challenge', [TwoFactorChallengeController::class, 'create'])
+        ->name('two-factor.challenge');
+
+    Route::post('two-factor-challenge', [TwoFactorChallengeController::class, 'store'])
+        ->middleware('throttle:6,1');
+
+    Route::delete('two-factor-challenge', [TwoFactorChallengeController::class, 'destroy'])
+        ->name('two-factor.cancel');
+
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:6,1')
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
         ->name('password.reset');
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->middleware('throttle:6,1')
         ->name('password.store');
 });
 

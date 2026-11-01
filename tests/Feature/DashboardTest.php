@@ -19,7 +19,7 @@ it('renders the focused dashboard with empty database data', function () {
 it('sends consumers to the public catalogue instead of the internal dashboard', function () {
     /** @var \Tests\TestCase $this */
     $user = User::factory()->create();
-    Role::create(['name' => 'consommateur', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'consommateur', 'guard_name' => 'web']);
     $user->assignRole('consommateur');
 
     $this->actingAs($user)

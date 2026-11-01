@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 
 test('reset password link screen can be rendered', function () {
@@ -56,5 +57,25 @@ test('password can be reset with valid token', function () {
             ->assertRedirect(route('login'));
 
         return true;
+    });
+});
+
+test('forgot password email is delivered through the Brevo integration', function () {
+    config([
+        'mail.default' => 'brevo',
+        'services.brevo.api_key' => 'test-key',
+        'services.brevo.sender_email' => 'sender@example.com',
+    ]);
+    Http::fake(['https://api.brevo.com/*' => Http::response(['messageId' => 'reset-message'], 201)]);
+
+    $user = User::factory()->create();
+
+    $this->post('/forgot-password', ['email' => $user->email])->assertSessionHasNoErrors();
+
+    Http::assertSent(function ($request) use ($user) {
+        return str_contains($request->url(), 'api.brevo.com')
+            && $request->hasHeader('api-key', 'test-key')
+            && $request['to'][0]['email'] === $user->email
+            && str_contains($request['htmlContent'], '/reset-password/');
     });
 });

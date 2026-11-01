@@ -5,8 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,18 +15,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $manageProducts = Permission::firstOrCreate(['name' => 'manage_products', 'guard_name' => 'web']);
-        $manageUsers = Permission::firstOrCreate(['name' => 'manage_users', 'guard_name' => 'web']);
-        $reviewVerifications = Permission::firstOrCreate(['name' => 'review_verifications', 'guard_name' => 'web']);
-
-        $roleProducteur = Role::firstOrCreate(['name' => 'producteur', 'guard_name' => 'web']);
-        $roleTransformateur = Role::firstOrCreate(['name' => 'transformateur', 'guard_name' => 'web']);
-        $roleDistributeur = Role::firstOrCreate(['name' => 'distributeur', 'guard_name' => 'web']);
-        $roleConsommateur = Role::firstOrCreate(['name' => 'consommateur', 'guard_name' => 'web']);
-
-        $roleProducteur->givePermissionTo($manageProducts);
-        $roleTransformateur->givePermissionTo($manageProducts);
-        $roleDistributeur->givePermissionTo($manageProducts);
+        // Permissions du back-office et attribution par rôle (source unique).
+        $this->call(RolePermissionSeeder::class);
 
         $this->call(AdminSeeder::class);
 
@@ -42,8 +30,8 @@ class DatabaseSeeder extends Seeder
                 'remember_token' => \Illuminate\Support\Str::random(10),
             ]
         );
-        if (! $user->hasRole($roleProducteur)) {
-            $user->assignRole($roleProducteur);
+        if (! $user->hasRole('producteur')) {
+            $user->assignRole('producteur');
         }
 
         $this->call([
