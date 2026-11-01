@@ -15,6 +15,11 @@ class AdminSeeder extends Seeder
         $password = env('ADMIN_PASSWORD');
 
         if (blank($password)) {
+            if (app()->environment('testing')) {
+        $password = 'password';
+    } else {
+        throw new \RuntimeException('ADMIN_PASSWORD must be set before running AdminSeeder.');
+    }
             throw new \RuntimeException('ADMIN_PASSWORD must be set before running AdminSeeder.');
         }
 
