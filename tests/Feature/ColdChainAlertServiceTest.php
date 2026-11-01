@@ -8,8 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('classifies cold-chain temperature conditions and creates the expected alerts', function () {
-    $this->seed();
-    $batch = Batch::query()->firstOrFail();
+    $batch = Batch::factory()->create();
     $service = app(ColdChainAlertService::class);
 
     $criticalCondition = TransportCondition::factory()->for($batch)->create([

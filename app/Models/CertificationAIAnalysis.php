@@ -66,11 +66,15 @@ class CertificationAIAnalysis extends Model
 
     public static function latestSaved(): ?self
     {
-        return self::query()->where('status', 'completed')->latest('created_at')->first();
+        return self::query()
+            ->where('status', 'completed')
+            ->latest('created_at')
+            ->latest('id')
+            ->first();
     }
 
     public static function latestAttempt(): ?self
     {
-        return self::query()->latest('created_at')->first();
+        return self::query()->latest('created_at')->latest('id')->first();
     }
 }

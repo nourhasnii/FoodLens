@@ -58,13 +58,15 @@ class Certification extends Model
             return self::STATUS_PENDING;
         }
 
-        $expiresAt = $expiresAt instanceof CarbonInterface ? $expiresAt : Carbon::parse($expiresAt);
+        $expirationDate = ($expiresAt instanceof CarbonInterface ? $expiresAt : Carbon::parse($expiresAt))
+            ->toDateString();
+        $today = today()->toDateString();
 
-        if ($expiresAt->isPast()) {
+        if ($expirationDate < $today) {
             return self::STATUS_EXPIRED;
         }
 
-        return $expiresAt->lessThanOrEqualTo(now()->addDays(30))
+        return $expirationDate <= today()->addDays(30)->toDateString()
             ? self::STATUS_EXPIRING
             : self::STATUS_VALID;
     }

@@ -15,6 +15,7 @@ it('stores product uploads and retains or replaces the image on update', functio
         'name' => 'Huile locale',
         'description' => 'Huile produite localement.',
         'category_id' => $category->id,
+        'origin_country' => 'Tunisia',
         'producer_id' => $user->id,
         'unit' => 'litre',
         'carbon_footprint' => '1.25',

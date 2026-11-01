@@ -37,8 +37,8 @@
     </div>
 
     <div>
-        <label for="origin_country" class="block text-sm font-medium text-gray-700">Pays d'origine</label>
-        <input id="origin_country" type="text" name="origin_country" value="{{ old('origin_country', $product->origin_country ?? '') }}" minlength="2" maxlength="60" class="mt-1 block w-full rounded-md {{ $errors->has('origin_country') ? 'border-red-400' : 'border-gray-300' }} shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        <label for="origin_country" class="block text-sm font-medium text-gray-700">Pays d'origine <span class="text-amber-warm">*</span></label>
+        <input id="origin_country" type="text" name="origin_country" value="{{ old('origin_country', $product->origin_country ?? '') }}" required minlength="2" maxlength="60" class="mt-1 block w-full rounded-md {{ $errors->has('origin_country') ? 'border-red-400' : 'border-gray-300' }} shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
         @error('origin_country')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
     </div>
 

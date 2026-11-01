@@ -44,7 +44,7 @@ it('allows an authenticated user to manage certifications with documents', funct
         'certificate_number' => 'CERT-TEST-001-UPDATED',
         'issuing_organization' => 'Test Organization',
         'issued_at' => '2026-09-10',
-        'expires_at' => '2026-09-20',
+        'expires_at' => now()->addDays(10)->toDateString(),
         'status' => 'valid',
         'notes' => 'Expiring soon',
     ])->assertRedirect(route('admin.certifications.index'));

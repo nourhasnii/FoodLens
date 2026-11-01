@@ -16,11 +16,10 @@ class AdminSeeder extends Seeder
 
         if (blank($password)) {
             if (app()->environment('testing')) {
-        $password = 'password';
-    } else {
-        throw new \RuntimeException('ADMIN_PASSWORD must be set before running AdminSeeder.');
-    }
-            throw new \RuntimeException('ADMIN_PASSWORD must be set before running AdminSeeder.');
+                $password = 'password';
+            } else {
+                throw new \RuntimeException('ADMIN_PASSWORD must be set before running AdminSeeder.');
+            }
         }
 
         // Les permissions du rôle `admin` sont provisionnées par
@@ -34,7 +33,7 @@ class AdminSeeder extends Seeder
             ['email' => 'nour.hasni02@gmail.com'],
             [
                 'name' => 'Nour Hasni',
-                'password' => Hash::make(env('ADMIN_PASSWORD')),
+                'password' => Hash::make($password),
                 'email_verified_at' => now(),
             ],
         );

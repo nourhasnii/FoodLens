@@ -253,6 +253,7 @@ it('persists an AI analysis on disk and restores cached version without calling 
         'model' => 'qwen2.5vl',
         'prompt_version' => CertificationAIService::PROMPT_VERSION,
         'duration_ms' => 123,
+        'status' => 'completed',
     ]);
 
     Http::fake(['http://localhost:11434/api/generate' => fn () => throw new RequestException(

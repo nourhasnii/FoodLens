@@ -21,7 +21,7 @@ it('manages traceability events and renders a chronological timeline', function 
         'lot_number' => 'TOM-TEST-001',
         'production_date' => '2026-09-10',
         'expiration_date' => '2026-10-10',
-        'quantity' => 500,
+        'quantity' => 15,
         'unit' => 'kg',
         'status' => 'active',
     ]);
@@ -32,7 +32,7 @@ it('manages traceability events and renders a chronological timeline', function 
         'event_date' => '2026-09-10 08:00',
         'location' => 'Nabeul, Tunisia',
         'actor_id' => $actor->id,
-        'quantity' => 500,
+        'quantity' => 15,
         'description' => 'Harvest recorded',
     ])->assertRedirect(route('admin.batches.traceability', $batch));
 
@@ -64,7 +64,7 @@ it('manages traceability events and renders a chronological timeline', function 
         'event_date' => '2026-09-11 09:00',
         'location' => 'Processing Center',
         'actor_id' => $actor->id,
-        'quantity' => 480,
+        'quantity' => 14,
         'description' => 'Processed and packed',
     ])->assertRedirect(route('admin.batches.traceability', $batch));
 
