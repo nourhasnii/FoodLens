@@ -115,24 +115,6 @@ return [
     // Une ligne est signalée "DLC proche" en dessous de ce nombre de jours
     'expiring_soon_days' => 7,
 
-    /*
-    |--------------------------------------------------------------------------
-    | Inventaire par photo (IA de vision locale, via Ollama)
-    |--------------------------------------------------------------------------
-    | Le modèle de vision de l'équipe (services.ollama) compte les produits visibles sur une photo.
-    | Sans Ollama, l'écran passe en saisie manuelle : la page reste utilisable.
-    */
-    'photo_inventory' => [
-        'model' => env('STOCK_VISION_MODEL'),           // null : modèle de config/services.php (qwen2.5vl)
-        'max_photo_kb' => 8192,
-        // La photo est réduite à ce côté maximal (px) avant l'analyse : beaucoup plus rapide sur processeur
-        'max_side' => 1280,
-        // En dessous de cette confiance, le comptage de l'IA est signalé « à vérifier »
-        'low_confidence' => 0.6,
-        // Similarité minimale (%) entre le nom lu par l'IA et un produit du site pour les associer
-        'match_threshold' => 55,
-    ],
-
     'alerts' => [
         // Notification par e-mail en plus de la notification en base
         'mail' => env('STOCK_ALERT_MAIL', false),

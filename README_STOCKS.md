@@ -349,23 +349,7 @@ Menu **Digital twin** (`/simulations`). Le jumeau numérique copie l'**état ré
 - **Contrôle** : pour chaque stratégie, stock de départ = vendu + jeté + donné + restant. Les stocks réels ne sont **jamais** modifiés.
 - Code : `app/Services/Simulation/DigitalTwinSimulator.php`, `SimulationController`, `SimulationRequest`, table `stock_simulations` (historique), `StockSimulationFactory`.
 
-## 7 quinquies. Inventaire par photo (IA de vision)
-
-Menu **Photo inventory** (`/photo-inventories`).
-
-1. Photo d'un rayon ou d'une palette (sur téléphone, l'appareil photo s'ouvre directement).
-2. Le modèle de vision **local** de l'équipe (Ollama `qwen2.5vl`, `config/services.php`) reçoit la photo et la liste des produits du site. Il renvoie un JSON : produit, nombre, confiance.
-3. Les noms lus sont rapprochés des produits du site (similarité de texte sans accents, mots d'emballage ignorés). Une confiance sous 60 % est marquée « à vérifier ». Les objets inconnus sont listés à part.
-4. **L'utilisateur valide ou corrige** : rien ne change avant la validation.
-5. Chaque écart devient un **mouvement d'ajustement** (motif « Inventaire photo #N »). Un manque est retiré d'abord du stock sans lot, puis des lots les plus proches de leur DLC.
-
-Sans Ollama (non lancé, modèle absent, réponse illisible), l'écran passe en **saisie manuelle** avec un bouton « Relancer l'analyse IA » : la page ne plante jamais. Les photos sont privées (disque `local`) et servies seulement aux comptes `manage_stocks`.
-
-Préparer Ollama le jour de la démo : installer Ollama (https://ollama.com/download), puis `ollama pull qwen2.5vl` (ou `qwen2.5vl:3b` sur un PC à 8 Go de RAM, avec `STOCK_VISION_MODEL=qwen2.5vl:3b` dans `.env`). La photo est réduite à 1280 px avant l'analyse, et la limite de temps PHP est allongée au délai d'Ollama.
-
-Code : `app/Services/Inventory/PhotoInventoryService.php`, `PhotoInventoryController`, `PhotoInventoryRequest`, `PhotoInventoryApplyRequest`, table `photo_inventories`, `PhotoInventoryFactory`.
-
-**Tests** : `DigitalTwinSimulatorTest` (11) et `PhotoInventoryTest` (10, Ollama simulé avec `Http::fake`).
+**Tests** : `DigitalTwinSimulatorTest` (11).
 
 ## 8. Scénario de démonstration (soutenance, ~5 min)
 

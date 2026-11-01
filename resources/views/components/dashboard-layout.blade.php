@@ -370,12 +370,6 @@
                                         <span>Digital twin</span>
                                     </a>
                                 </li>
-                                <li>
-                                    <a href="{{ route('photo-inventories.index') }}" class="{{ request()->routeIs('photo-inventories.*') ? 'bg-[#E3A23C] text-[#16281E] font-semibold' : 'text-white/70 hover:bg-white/5' }} group flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors" @click="sidebarOpen = false">
-                                        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
-                                        <span>Photo inventory</span>
-                                    </a>
-                                </li>
                             </ul>
                         </div>
                         @endcan
