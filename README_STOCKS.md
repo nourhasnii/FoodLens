@@ -162,7 +162,7 @@ Raccourci utile : le lien « Optimiser » d'une ligne de stock ouvre `optimizati
 - La permission est créée par la migration `2026_10_30_100000_add_manage_stocks_permission` (base existante : `php artisan migrate`) et par `StockPermissionSeeder` (appelé par `DatabaseSeeder`).
 - Les alertes de rupture (`NotifyLowStock`) partent seulement aux comptes **actifs** qui ont `manage_stocks` (`App\Support\StockAccess::managers()`).
 
-**Tests Pest** (`tests/Feature/Stocks`, 57 tests) : `php artisan test tests/Feature/Stocks`
+**Tests Pest** (`tests/Feature/Stocks`, 59 tests) : `php artisan test tests/Feature/Stocks`
 
 - `StockAccessTest` : accès par rôle, 403 pour le consommateur, menu masqué.
 - `StockServiceTest` : calcul du stock (entrée, sortie, transfert, ajustement), refus (stock insuffisant, même site, lot rappelé), alerte au franchissement du seuil, destinataires de l'alerte, Form Request.
@@ -349,7 +349,21 @@ Menu **Digital twin** (`/simulations`). Le jumeau numérique copie l'**état ré
 - **Contrôle** : pour chaque stratégie, stock de départ = vendu + jeté + donné + restant. Les stocks réels ne sont **jamais** modifiés.
 - Code : `app/Services/Simulation/DigitalTwinSimulator.php`, `SimulationController`, `SimulationRequest`, table `stock_simulations` (historique), `StockSimulationFactory`.
 
-**Tests** : `DigitalTwinSimulatorTest` (11).
+## 7 quinquies. DLC dynamique (microbiologie prévisionnelle)
+
+Menu **Dynamic shelf life** (`/dlc-dynamique`). La DLC imprimée suppose une chaîne du froid parfaite. L'IA lit les **températures du transport** de chaque lot (table `transport_conditions` du module Chaîne du froid) et prédit sa **vraie date limite**.
+
+- **Modèle de la racine carrée de Ratkowsky** (référence en microbiologie prévisionnelle) : vitesse de croissance des bactéries ∝ (T − Tmin)². Vitesse relative au froid prévu : `((T − Tmin) / (Tréf − Tmin))²`. Exemple, produits laitiers (Tréf 4 °C, Tmin −2 °C) : 1 h à 10 °C = 4 h de vie, donc 3 h perdues.
+- **Heures perdues** = Σ (vitesse − 1) × durée, pour chaque relevé plus chaud que la référence. **DLC réelle** = DLC imprimée − heures perdues. L'arrondi est prudent (6 h perdues ou plus retirent un jour), et la DLC n'est jamais prolongée.
+- **Fourchette** (au plus tôt / au plus tard) : le calcul est refait avec les bornes publiées de Tmin (± 1,5 °C).
+- **Profils** par famille, reconnue d'après le nom ou la catégorie du produit : produits laitiers, viandes et poissons, fruits et légumes, produits stables (épicerie), général. Réglages : `config/stock.php` → `shelf_life`.
+- **Risque** : chaîne du froid respectée / durée de vie réduite / contrôle qualité requis (≥ 2 h au-dessus de la T° critique, ou DLC réelle dépassée) / DLC imprimée dépassée / pas de relevé.
+- **Utilisée partout dans le module** (`BatchAttributes::effectiveExpiryDate`) : état des stocks (FEFO, « DLC proche »), Optimization Engine (avec une phrase d'explication), plan anti-gaspillage et jumeau numérique. La page Stocks barre la DLC imprimée et affiche la DLC réelle 🌡️.
+- **Validation humaine** : un responsable valide la DLC réelle ou garde la DLC imprimée (justification obligatoire, ex. contrôle qualité conforme). Les décisions sont stockées dans `shelf_life_assessments`.
+- Démo : `ShelfLifeDemoSeeder` (appelé par `StockModuleDemoSeeder`). LOT-2026-001 subit une panne du groupe froid près d'Enfidha : 61 h perdues, DLC du 13/11 au 10/11. LOT-2026-002 a une chaîne du froid respectée : DLC inchangée.
+- Code : `app/Services/ShelfLife/ShelfLifePredictor.php`, `ShelfLifeController`, `ShelfLifeDecisionRequest`, `ShelfLifeAssessment` + factory, vues `shelf-life/*`.
+
+**Tests** : `DigitalTwinSimulatorTest` (11) et `ShelfLifeTest` (12).
 
 ## 8. Scénario de démonstration (soutenance, ~5 min)
 

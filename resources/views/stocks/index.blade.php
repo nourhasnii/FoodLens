@@ -118,11 +118,22 @@
                     </thead>
                     <tbody>
                     @foreach ($lines as $line)
-                        @php $expiry = BatchAttributes::expiryDate($line->batch); @endphp
+                        @php
+                            $expiry = BatchAttributes::expiryDate($line->batch);
+                            // DLC dynamique : vraie date d'après les températures du transport
+                            $realExpiry = $line->batch ? BatchAttributes::effectiveExpiryDate($line->batch) : null;
+                        @endphp
                         <tr>
                             <td>{{ $line->product?->name ?? 'Produit supprimé' }}</td>
                             <td class="code">{{ $line->batch ? BatchAttributes::code($line->batch) : 'Sans lot' }}</td>
-                            <td>{{ $expiry?->format('d/m/Y') ?? '—' }}</td>
+                            <td>
+                                @if ($expiry && $realExpiry && $realExpiry->lt($expiry))
+                                    <s class="muted">{{ $expiry->format('d/m/Y') }}</s>
+                                    <a href="{{ route('shelf-life.show', $line->batch_id) }}" class="real-dlc" title="DLC réelle prédite d’après les températures du transport">{{ $realExpiry->format('d/m/Y') }} 🌡️</a>
+                                @else
+                                    {{ $expiry?->format('d/m/Y') ?? '—' }}
+                                @endif
+                            </td>
                             <td class="num">{{ Fmt::q($line->quantity) }}</td>
                             <td class="num">{{ Fmt::q($line->availableQuantity()) }}</td>
                             <td class="num">{{ Fmt::q($line->min_threshold) }}</td>
@@ -148,3 +159,9 @@
     </div>
 @endforelse
 @endsection
+
+@push('styles')
+<style>
+    .real-dlc { display: block; color: var(--brick); font-weight: 700; text-decoration: none; }
+</style>
+@endpush

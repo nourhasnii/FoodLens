@@ -115,6 +115,61 @@ return [
     // Une ligne est signalée "DLC proche" en dessous de ce nombre de jours
     'expiring_soon_days' => 7,
 
+    /*
+    |--------------------------------------------------------------------------
+    | DLC dynamique (microbiologie prévisionnelle)
+    |--------------------------------------------------------------------------
+    | La DLC imprimée suppose une chaîne du froid parfaite. Le modèle lit les températures
+    | du transport (table transport_conditions du module Chaîne du froid) et calcule la DLC réelle.
+    |
+    | Modèle de la racine carrée de Ratkowsky : vitesse de croissance des bactéries ∝ (T − Tmin)².
+    | Vitesse relative à la température de référence : ((T − Tmin) / (Tref − Tmin))².
+    | Ex. produits laitiers (Tref 4 °C, Tmin −2 °C) : 1 h à 10 °C vieillit le produit comme 4 h à 4 °C.
+    | Seules les expositions plus chaudes que la référence raccourcissent la DLC (jamais prolongée).
+    | La fourchette vient de l'incertitude sur Tmin (valeurs publiées) : optimiste / pessimiste.
+    */
+    'shelf_life' => [
+        'enabled' => env('STOCK_DYNAMIC_DLC', true),
+        // Durée d'un relevé sans durée renseignée (minutes)
+        'default_reading_minutes' => 60,
+        // Arrondi prudent : une tranche de plus de N heures perdues compte pour un jour entier de DLC
+        'day_rounding_hours' => 6,
+        // Vitesse relative maximale retenue (au-delà, le produit est de toute façon à détruire)
+        'max_relative_rate' => 40,
+        // Seuils de risque : jours de vie perdus
+        'attention_days' => 0.5,
+        // Temps cumulé au-dessus de la température critique déclenchant un contrôle qualité (minutes)
+        'critical_minutes' => 120,
+        'profiles' => [
+            'laitier' => [
+                'label' => 'Produits laitiers',
+                'keywords' => ['lait', 'laitier', 'yaourt', 'yogourt', 'lben', 'leben', 'raib', 'raïb', 'fromage', 'beurre', 'crème', 'creme'],
+                'reference_temp' => 4.0, 't_min' => -2.0, 't_min_range' => [-3.5, -0.5], 'critical_temp' => 8.0,
+            ],
+            'viande_poisson' => [
+                'label' => 'Viandes et poissons',
+                'keywords' => ['viande', 'poulet', 'dinde', 'boeuf', 'bœuf', 'agneau', 'veau', 'merguez', 'saucisse', 'poisson', 'thon', 'sardine', 'crevette'],
+                'reference_temp' => 2.0, 't_min' => -3.0, 't_min_range' => [-4.5, -1.5], 'critical_temp' => 7.0,
+            ],
+            'fruits_legumes' => [
+                'label' => 'Fruits et légumes frais',
+                'keywords' => ['fruit', 'légume', 'legume', 'tomate', 'salade', 'pomme', 'orange', 'fraise', 'datte', 'carotte', 'poivron'],
+                'reference_temp' => 6.0, 't_min' => -1.0, 't_min_range' => [-2.5, 0.5], 'critical_temp' => 15.0,
+            ],
+            // Produits stables (huile, conserves, épicerie) : seule une forte chaleur les abîme
+            'stable' => [
+                'label' => 'Produits stables (épicerie)',
+                'keywords' => ['huile', 'olive', 'pain', 'baguette', 'conserve', 'miel', 'pâtes', 'pates', 'riz', 'farine', 'sucre', 'café', 'cafe', 'thé', 'the', 'épice', 'epice', 'biscuit', 'semoule', 'couscous', 'harissa', 'confiture'],
+                'reference_temp' => 25.0, 't_min' => 5.0, 't_min_range' => [3.0, 7.0], 'critical_temp' => 40.0,
+            ],
+            'default' => [
+                'label' => 'Produits frais (profil général)',
+                'keywords' => [],
+                'reference_temp' => 4.0, 't_min' => -2.0, 't_min_range' => [-3.5, -0.5], 'critical_temp' => 10.0,
+            ],
+        ],
+    ],
+
     'alerts' => [
         // Notification par e-mail en plus de la notification en base
         'mail' => env('STOCK_ALERT_MAIL', false),

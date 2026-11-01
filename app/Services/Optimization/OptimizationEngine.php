@@ -54,11 +54,14 @@ class OptimizationEngine
             throw ValidationException::withMessages(['batch_id' => 'Ce lot est rappelé : il ne peut pas être redistribué.']);
         }
 
-        $daysLeft = BatchAttributes::daysToExpiry($batch);
+        $daysLeft = BatchAttributes::daysToEffectiveExpiry($batch); // DLC réelle (chaîne du froid)
 
         if ($daysLeft !== null && $daysLeft < 0) {
+            $printedLeft = BatchAttributes::daysToExpiry($batch);
             throw ValidationException::withMessages([
-                'batch_id' => 'Ce lot a dépassé sa DLC : enregistrez une sortie (destruction) au lieu de le redistribuer.',
+                'batch_id' => $printedLeft !== null && $printedLeft >= 0
+                    ? 'La DLC réelle de ce lot est dépassée (chaîne du froid interrompue, voir « DLC dynamique ») : faites un contrôle qualité avant toute redistribution.'
+                    : 'Ce lot a dépassé sa DLC : enregistrez une sortie (destruction) au lieu de le redistribuer.',
             ]);
         }
 
@@ -96,6 +99,16 @@ class OptimizationEngine
 
         $feasible = array_values(array_filter($candidates, fn (array $c) => $c['feasible']));
         $best = $feasible[0] ?? null;
+
+        // DLC dynamique : le calcul utilise la DLC réelle prédite d'après les températures du transport
+        $printedExpiry = BatchAttributes::expiryDate($batch);
+        $effectiveExpiry = BatchAttributes::effectiveExpiryDate($batch);
+        if ($printedExpiry && $effectiveExpiry && $effectiveExpiry->lt($printedExpiry)) {
+            $weightNotes[] = sprintf(
+                'DLC réelle prédite le %s au lieu du %s (%d jour(s) de vie perdus pendant le transport) : c’est cette date qui est utilisée.',
+                $effectiveExpiry->format('d/m/Y'), $printedExpiry->format('d/m/Y'), (int) abs($effectiveExpiry->diffInDays($printedExpiry))
+            );
+        }
 
         $sourceLine = $this->stocks->findLine($source->getKey(), (int) $batch->product_id, $batch->getKey());
         if ((float) ($sourceLine?->quantity ?? 0) < $quantity) {

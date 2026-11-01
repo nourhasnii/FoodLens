@@ -53,5 +53,8 @@ class StockModuleDemoSeeder extends Seeder
         $this->command?->info('Produits et lots de démonstration prêts.');
 
         $this->call(StockDemoSeeder::class);
+
+        // Températures du transport des lots de démo, pour la DLC dynamique
+        $this->call(ShelfLifeDemoSeeder::class);
     }
 }

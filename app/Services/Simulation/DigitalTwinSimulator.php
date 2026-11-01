@@ -188,7 +188,7 @@ class DigitalTwinSimulator
                 continue; // lot rappelé ou périmé : invendable
             }
 
-            $expiry = BatchAttributes::expiryDate($line->batch);
+            $expiry = BatchAttributes::effectiveExpiryDate($line->batch); // DLC réelle (chaîne du froid)
             if ($expiry && $expiry->lt($this->start)) {
                 continue;
             }

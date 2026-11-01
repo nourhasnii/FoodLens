@@ -45,7 +45,7 @@ class AntiWastePlanner
 
     public function plan(Batch $batch, Site $source, float $quantity): array
     {
-        $daysLeft = BatchAttributes::daysToExpiry($batch);
+        $daysLeft = BatchAttributes::daysToEffectiveExpiry($batch); // DLC réelle (chaîne du froid)
 
         if ($daysLeft === null) {
             return $this->notApplicable('La DLC du lot n’est pas renseignée : le plan anti-gaspillage ne s’applique qu’aux produits datés.');
@@ -63,7 +63,7 @@ class AntiWastePlanner
         $aw = config('stock.anti_waste');
         $productId = (int) $batch->product_id;
         $unitKg = BatchAttributes::unitWeightKg($batch->product);
-        $expiry = BatchAttributes::expiryDate($batch);
+        $expiry = BatchAttributes::effectiveExpiryDate($batch);
         $elasticity = (float) $aw['price_elasticity'];
         $notes = [];
 
@@ -381,7 +381,7 @@ class AntiWastePlanner
                     return ! $isSource;
                 }
 
-                $other = $line->batch ? BatchAttributes::expiryDate($line->batch) : null;
+                $other = $line->batch ? BatchAttributes::effectiveExpiryDate($line->batch) : null;
 
                 return $other !== null && $expiry !== null && $other->lte($expiry);
             })

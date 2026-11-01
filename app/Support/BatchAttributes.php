@@ -39,6 +39,28 @@ final class BatchAttributes
         return $expiry ? (int) round(CarbonImmutable::today()->diffInDays($expiry, false)) : null;
     }
 
+    /**
+     * DLC utilisée pour les DÉCISIONS du module (FEFO, optimisation, anti-gaspillage, jumeau numérique) :
+     * la DLC réelle prédite d'après les températures du transport, sauf si un responsable l'a rejetée.
+     * Sans relevé de température : la DLC imprimée.
+     */
+    public static function effectiveExpiryDate(?Model $batch): ?CarbonImmutable
+    {
+        if (! $batch instanceof \App\Models\Batch) {
+            return self::expiryDate($batch);
+        }
+
+        return app(\App\Services\ShelfLife\ShelfLifePredictor::class)->effectiveExpiry($batch);
+    }
+
+    /** Jours restants avant la DLC réelle (négatif si dépassée), null si inconnue. */
+    public static function daysToEffectiveExpiry(?Model $batch): ?int
+    {
+        $expiry = self::effectiveExpiryDate($batch);
+
+        return $expiry ? (int) round(CarbonImmutable::today()->diffInDays($expiry, false)) : null;
+    }
+
     public static function isExpired(?Model $batch): bool
     {
         $days = self::daysToExpiry($batch);

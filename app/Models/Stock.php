@@ -70,7 +70,7 @@ class Stock extends Model
                 return 'recalled';
             }
 
-            $days = BatchAttributes::daysToExpiry($this->batch);
+            $days = BatchAttributes::daysToEffectiveExpiry($this->batch); // DLC réelle (chaîne du froid)
 
             if ($days !== null && $days < 0) {
                 return 'expired';
